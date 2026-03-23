@@ -1,0 +1,2 @@
+ALTER TABLE barber
+ADD COLUMN role VARCHAR(255);
