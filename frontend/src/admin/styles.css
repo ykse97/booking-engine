@@ -1,14 +1,3 @@
-body {
-    margin: 0;
-    color: var(--lux-text);
-    font-family: "Inter", "Segoe UI", sans-serif;
-    background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 22%),
-        radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.02), transparent 24%),
-        radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.018), transparent 26%),
-        linear-gradient(180deg, #020202 0%, #060606 54%, #0d0d0d 100%);
-}
-
 .page {
     position: relative;
     width: min(1280px, calc(100% - 32px));
@@ -91,6 +80,31 @@ body {
 
 .row-end {
     align-items: stretch;
+}
+
+.page,
+.panel,
+.grid,
+.row,
+.row-inline,
+.table-wrapper,
+.admin-route-shell,
+.admin-page-stack,
+.admin-booking-grid,
+.admin-booking-main,
+.admin-booking-aside,
+.admin-booking-blacklist-grid,
+.admin-summary-strip,
+.admin-booking-datetime-grid,
+.admin-card-heading,
+.admin-card-body,
+.admin-booking-selection-grid,
+.admin-booking-form-grid,
+.admin-blacklist-form-grid,
+.admin-blacklist-list-body,
+.admin-control-row,
+.admin-form-grid-shell {
+    min-width: 0;
 }
 
 label {
@@ -300,7 +314,14 @@ td {
 }
 
 .table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    padding-bottom: 6px;
 }
 
 .table-wrapper::-webkit-scrollbar,
@@ -312,6 +333,42 @@ td {
 .row-inline::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.18);
     border-radius: 999px;
+}
+
+.admin-table-shell {
+    scrollbar-gutter: stable both-edges;
+}
+
+.admin-data-table {
+    width: max-content;
+    min-width: 100%;
+}
+
+.admin-data-table-bookings {
+    min-width: 1120px;
+}
+
+.admin-data-table-blacklist {
+    min-width: 760px;
+}
+
+.admin-data-table-team {
+    min-width: 860px;
+}
+
+.admin-data-table-schedule {
+    min-width: 780px;
+}
+
+.admin-data-table-schedule input[type="time"],
+.admin-data-table-schedule input[type="date"],
+.admin-data-table-schedule select {
+    min-width: 128px;
+}
+
+.admin-data-table-schedule th:last-child,
+.admin-data-table-schedule td:last-child {
+    min-width: 120px;
 }
 
 .code {
@@ -506,6 +563,14 @@ td {
     padding: 20px;
 }
 
+.admin-booking-selection-card,
+.admin-booking-customer-card,
+.admin-blacklist-form-card,
+.admin-blacklist-list-card,
+.admin-booking-summary-card {
+    min-width: 0;
+}
+
 .admin-booking-selection-grid,
 .admin-booking-form-grid,
 .admin-booking-datetime-grid {
@@ -513,18 +578,67 @@ td {
     gap: 16px;
 }
 
+.admin-control-row {
+    gap: 14px;
+}
+
+.admin-control-row > * {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.admin-card-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-card-body {
+    display: grid;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.admin-card-actions {
+    gap: 14px;
+}
+
+.admin-card-actions > * {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.admin-booking-selection-card {
+    display: grid;
+    gap: 18px;
+}
+
+.admin-blacklist-form-grid {
+    gap: 18px;
+}
+
+.admin-blacklist-list-body {
+    gap: 20px;
+}
+
 .admin-booking-search-row {
+    gap: 16px;
     align-items: stretch;
 }
 
 .admin-search-field {
     flex: 1 1 320px;
+    min-width: 0;
+    gap: 10px;
 }
 
 .admin-search-field span {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    line-height: 1.45;
 }
 
 .admin-booking-search-row>.btn-gold {
@@ -588,6 +702,82 @@ td {
     padding: 20px;
 }
 
+.booking-summary-card {
+    display: grid;
+    gap: 18px;
+}
+
+.booking-summary-card h2 {
+    margin: 0;
+    color: #fff8ee;
+    font-family: "Cinzel", "Playfair Display", serif;
+    font-size: 1.35rem;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.booking-summary-description {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.76);
+    line-height: 1.75;
+    max-width: 34ch;
+}
+
+.booking-summary-list {
+    display: grid;
+    gap: 0;
+}
+
+.admin-summary-header {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-summary-list-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-summary-list-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.admin-summary-list-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: #d3c9bd;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.admin-summary-list-key svg {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.admin-summary-list-label {
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.04em;
+}
+
+.admin-summary-list-value {
+    color: #fff8ef;
+    font-family: "Cinzel", "Playfair Display", serif;
+    font-size: 1rem;
+    line-height: 1.45;
+    text-align: right;
+    justify-self: end;
+    word-break: break-word;
+}
+
 .admin-status-pill {
     display: inline-flex;
     align-items: center;
@@ -629,17 +819,19 @@ td {
     color: #d7e1ff;
 }
 
-.admin-booking-datetime-grid .glass-card,
-.admin-booking-datetime-grid .booking-time-panel,
-.admin-booking-datetime-grid .booking-date-panel {
-    height: 100%;
-}
-
 .admin-booking-datetime-grid .glass-card {
     background:
         radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 34%),
         radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.04), transparent 30%),
         linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(7, 7, 7, 0.94));
+    height: auto;
+}
+
+.admin-booking-calendar-panel,
+.admin-booking-time-panel {
+    width: 100%;
+    min-width: 0;
+    align-self: start;
 }
 
 .admin-booking-datetime-grid .booking-date-panel .flex.items-center.justify-between,
@@ -704,10 +896,6 @@ td {
     color: #fff8ef;
 }
 
-.admin-booking-customer-card .row {
-    margin-top: 18px;
-}
-
 .admin-form-actions {
     margin-top: 24px;
 }
@@ -748,6 +936,126 @@ td {
 
 .barber-day-grid-spacer {
     display: none;
+}
+
+@media (max-width: 767px) {
+    .page {
+        width: min(100%, calc(100% - 20px));
+        padding: 20px 0 calc(84px + env(safe-area-inset-bottom));
+        gap: 16px;
+    }
+
+    .panel {
+        padding: 18px;
+        border-radius: 24px;
+    }
+
+    .admin-header {
+        padding: 22px;
+    }
+
+    .admin-booking-grid,
+    .admin-booking-main,
+    .admin-booking-aside,
+    .admin-booking-blacklist-grid,
+    .admin-booking-datetime-grid,
+    .admin-summary-strip {
+        gap: 16px;
+    }
+
+    .admin-card-body {
+        margin-top: 16px;
+        gap: 16px;
+    }
+
+    .admin-form-actions,
+    .admin-card-actions,
+    .admin-booking-list-actions {
+        gap: 14px;
+    }
+
+    .admin-control-row > *,
+    .admin-card-actions > *,
+    .admin-form-actions > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .booking-summary-card h2 {
+        font-size: 1.2rem;
+        letter-spacing: 0.06em;
+    }
+
+    .booking-summary-description,
+    .panel-note {
+        line-height: 1.7;
+    }
+
+    .admin-summary-list-item {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 8px;
+        padding: 12px 0;
+    }
+
+    .admin-summary-list-value {
+        justify-self: start;
+        text-align: left;
+    }
+
+    .admin-booking-selection-card,
+    .admin-booking-customer-card,
+    .admin-blacklist-form-card,
+    .admin-blacklist-list-card,
+    .admin-booking-summary-card {
+        padding: 18px;
+    }
+
+    .admin-search-field {
+        width: 100%;
+        flex-basis: auto;
+    }
+
+    .admin-summary-strip {
+        grid-template-columns: 1fr;
+        margin: 16px 0;
+    }
+
+    .admin-summary-pill {
+        min-height: 0;
+    }
+
+    .admin-table-shell {
+        margin: 0 -4px;
+        padding: 0 4px 8px;
+    }
+
+    .admin-data-table th,
+    .admin-data-table td {
+        padding: 12px 10px;
+    }
+
+    .admin-data-table-bookings {
+        min-width: 1040px;
+    }
+
+    .admin-data-table-team {
+        min-width: 820px;
+    }
+
+    .admin-data-table-blacklist {
+        min-width: 720px;
+    }
+
+    .admin-data-table-schedule {
+        min-width: 760px;
+    }
+
+    .admin-data-table-schedule input[type="time"],
+    .admin-data-table-schedule input[type="date"],
+    .admin-data-table-schedule select {
+        min-width: 116px;
+    }
 }
 
 @media (min-width: 768px) {
@@ -806,6 +1114,12 @@ td {
         grid-column: 1 / -1;
     }
 
+    .admin-booking-search-row>.btn-gold,
+    .admin-card-actions > *,
+    .admin-blacklist-toolbar > * {
+        min-width: 220px;
+    }
+
     .barber-day-grid-spacer {
         display: block;
     }
@@ -821,12 +1135,30 @@ td {
     }
 
     .admin-booking-grid {
-        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+        grid-template-columns: minmax(0, 1.32fr) minmax(340px, 0.88fr);
         align-items: start;
+        gap: 24px;
     }
 
     .admin-booking-datetime-grid {
-        grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.05fr);
+        grid-template-columns: minmax(300px, 0.92fr) minmax(360px, 1.08fr);
+        align-items: start;
+    }
+
+    .admin-booking-time-panel .time-slot-list-grid {
+        max-height: 31rem;
+        overflow-y: auto;
+        padding-right: 6px;
+        align-content: start;
+    }
+
+    .admin-booking-time-panel .time-slot-list-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .admin-booking-time-panel .time-slot-list-grid::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
     }
 
     .admin-booking-aside {

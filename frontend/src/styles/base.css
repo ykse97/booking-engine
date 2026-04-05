@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -305,190 +303,6 @@ body {
     box-shadow: none;
 }
 
-.tab-pill {
-    @apply px-3 py-2 rounded-full text-[11px] uppercase whitespace-nowrap;
-    letter-spacing: 0.14em;
-    color: #e5d8c7;
-    border: 1px solid var(--lux-line);
-    background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.045), transparent 40%),
-        linear-gradient(180deg, rgba(19, 19, 19, 0.96), rgba(7, 7, 7, 0.94));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 10px 18px rgba(0, 0, 0, 0.12);
-}
-
-.tab-pill.active {
-    @apply text-night;
-    background: linear-gradient(180deg, var(--lux-accent-1) 0%, var(--lux-accent-2) 48%, var(--lux-accent-3) 100%);
-    border-color: transparent;
-    box-shadow:
-        0 10px 22px rgba(141, 91, 36, 0.24),
-        0 0 24px rgba(213, 164, 93, 0.14);
-}
-
-.time-slot {
-    @apply w-full text-left rounded-xl text-sm tracking-wide transition disabled:opacity-40 disabled:cursor-not-allowed;
-    min-height: 72px;
-    padding: 10px 12px;
-    display: grid;
-    grid-template-rows: minmax(20px, auto) minmax(16px, auto);
-    gap: 4px;
-    align-items: start;
-    align-content: stretch;
-    color: var(--lux-text);
-    border: 1px solid var(--lux-line);
-    background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 30%),
-        linear-gradient(180deg, rgba(20, 20, 20, 0.96), rgba(7, 7, 7, 0.93));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 12px 22px rgba(0, 0, 0, 0.16);
-}
-
-.time-slot:hover:not(:disabled) {
-    border-color: rgba(244, 220, 169, 0.42);
-    box-shadow:
-        0 0 0 1px rgba(244, 220, 169, 0.08),
-        0 12px 24px rgba(0, 0, 0, 0.24);
-}
-
-.time-slot.time-slot-selected {
-    color: #170f09;
-    border-color: rgba(255, 226, 168, 0.2);
-    background:
-        linear-gradient(180deg, #f6e3bb 0%, #dfbc7b 45%, #b77f37 100%);
-    box-shadow:
-        0 0 0 2px rgba(244, 220, 169, 0.14),
-        0 16px 28px rgba(0, 0, 0, 0.24),
-        0 0 30px rgba(212, 166, 90, 0.22),
-        inset 0 1px 0 rgba(255, 246, 220, 0.52);
-}
-
-.time-slot.booked {
-    background: rgba(16, 16, 16, 0.94);
-    color: #857868;
-    border-color: rgba(255, 255, 255, 0.04);
-}
-
-.time-slot.time-slot-held {
-    background: rgba(22, 22, 22, 0.94);
-    color: #ebdbb9;
-    border-color: rgba(242, 215, 159, 0.16);
-}
-
-.time-slot.time-slot-break {
-    background: rgba(22, 22, 22, 0.94);
-    color: #b8a893;
-    border-color: rgba(255, 255, 255, 0.06);
-}
-
-.time-slot-primary {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.time-slot-label {
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    line-height: 1.25;
-    font-size: 0.93rem;
-}
-
-.time-slot-status {
-    color: inherit;
-    opacity: 0.82;
-    font-size: 0.72rem;
-    line-height: 1.2;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.time-slot-status-placeholder {
-    visibility: hidden;
-}
-
-.time-slot-selected-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    min-height: 20px;
-    padding: 3px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(23, 15, 9, 0.12);
-    background: rgba(23, 15, 9, 0.1);
-    color: #170f09;
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.3rem;
-}
-
-.calendar-day {
-    @apply h-9 flex items-center justify-center rounded-full text-sm transition;
-    color: var(--lux-text);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.035), transparent 40%),
-        linear-gradient(180deg, rgba(18, 18, 18, 0.95), rgba(8, 8, 8, 0.92));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.calendar-day.active {
-    background: linear-gradient(180deg, var(--lux-accent-1) 0%, var(--lux-accent-2) 48%, var(--lux-accent-3) 100%);
-    color: #140d09;
-    border-color: transparent;
-    box-shadow:
-        0 10px 20px rgba(141, 91, 36, 0.24),
-        0 0 22px rgba(213, 164, 93, 0.12);
-}
-
-.calendar-day.muted {
-    color: #7f6b58;
-    opacity: 0.58;
-}
-
-.calendar-day:hover:not(.muted) {
-    border-color: rgba(227, 192, 122, 0.45);
-}
-
-.payment-input {
-    @apply w-full rounded-[12px] px-4 py-3 placeholder:text-smoke focus:outline-none transition;
-    min-height: 48px;
-    font-size: 16px;
-    color: var(--lux-text);
-    background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 38%),
-        linear-gradient(180deg, rgba(14, 14, 14, 0.96), rgba(5, 5, 5, 0.92));
-    border: 1px solid var(--lux-line);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.05),
-        0 10px 18px rgba(0, 0, 0, 0.12);
-    caret-color: var(--lux-accent-1);
-}
-
-.payment-input::placeholder {
-    color: rgba(255, 255, 255, 0.42);
-}
-
-.payment-input:focus {
-    border-color: rgba(244, 220, 169, 0.5);
-    box-shadow:
-        0 0 0 3px rgba(213, 164, 93, 0.09),
-        0 14px 26px rgba(0, 0, 0, 0.16),
-        inset 0 1px 0 rgba(255, 238, 208, 0.05);
-}
-
 .ornament {
     position: relative;
     height: 1px;
@@ -618,10 +432,6 @@ body {
         font-size: 0.875rem;
     }
 
-    .calendar-day {
-        height: 2.5rem;
-    }
-
     .ornament {
         width: 86%;
         margin-top: 12px;
@@ -672,15 +482,6 @@ body {
         height: 2.75rem;
     }
 
-    .calendar-grid {
-        gap: 0.4rem;
-    }
-
-    .calendar-day {
-        height: 2.75rem;
-        font-size: 0.9375rem;
-    }
-
     .divider {
         width: 80px;
     }
@@ -708,19 +509,6 @@ body {
 /* ================= TOUCH OPTIMIZATIONS ================= */
 @media (hover: none) and (pointer: coarse) {
 
-    .time-slot:hover:not(:disabled),
-    .calendar-day:hover:not(.muted) {
-        border-color: transparent;
-    }
-
-    .time-slot:active:not(:disabled) {
-        border-color: rgba(227, 192, 122, 0.52);
-    }
-
-    .calendar-day:active:not(.muted) {
-        border-color: rgba(227, 192, 122, 0.45);
-    }
-
     .btn-gold:active {
         transform: scale(0.98);
     }
@@ -732,9 +520,7 @@ body {
         scroll-behavior: auto;
     }
 
-    .btn-gold,
-    .time-slot,
-    .calendar-day {
+    .btn-gold {
         transition: none;
     }
 }

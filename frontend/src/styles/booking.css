@@ -377,14 +377,28 @@
 }
 
 .booking-choice-media {
+    position: relative;
     width: 100%;
     aspect-ratio: 16 / 10;
-    background-size: cover;
-    background-position: center;
+    overflow: hidden;
+    background: rgba(7, 7, 7, 0.95);
 }
 
 .booking-choice-media-barber {
     aspect-ratio: 4 / 3;
+}
+
+.booking-choice-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.booking-choice-media-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
 }
 
 .booking-choice-body {

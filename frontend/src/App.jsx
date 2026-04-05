@@ -1,16 +1,16 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import Services from './pages/Services';
-import Faq from './pages/Faq';
-import Booking from './pages/Booking';
 import { scrollWindowToElement, setAutoScrollHidden } from './utils/scroll';
 
 const PENDING_SCROLL_KEY = 'pending-section-scroll';
 const SECTION_SCROLL_PENDING_CLASS = 'section-scroll-pending';
 const MOBILE_FORCE_SCROLL_TOP_KEY = 'mobile-force-scroll-top';
+const Services = lazy(() => import('./pages/Services'));
+const Faq = lazy(() => import('./pages/Faq'));
+const Booking = lazy(() => import('./pages/Booking'));
 
 function setSectionScrollPending(isPending) {
     if (typeof document === 'undefined') {
@@ -170,7 +170,19 @@ function Layout({ children }) {
     );
 }
 
+function RouteFallback({ pathname }) {
+    const isBookingRoute = pathname === '/booking';
+
+    return (
+        <section className="services-page-shell py-10 sm:py-12 lg:py-14" aria-hidden="true">
+            <div className={`mx-auto w-full ${isBookingRoute ? 'max-w-[960px] min-h-[72vh]' : 'max-w-[760px] min-h-[56vh]'}`} />
+        </section>
+    );
+}
+
 export default function App() {
+    const location = useLocation();
+
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
         const adminSubpath =
             window.location.pathname === '/admin'
@@ -185,12 +197,14 @@ export default function App() {
 
     return (
         <Layout>
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/booking" element={<Booking />} />
-                <Route path="/faq" element={<Faq />} />
-            </Routes>
+            <Suspense fallback={<RouteFallback pathname={location.pathname} />}>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/services" element={<Services />} />
+                    <Route path="/booking" element={<Booking />} />
+                    <Route path="/faq" element={<Faq />} />
+                </Routes>
+            </Suspense>
         </Layout>
     );
 }

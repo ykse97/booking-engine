@@ -80,8 +80,7 @@ export default function SalonPage({
                     </label>
                 </form>
 
-                <div className="row">
-
+                <div className="row admin-form-actions">
                     <button type="button" className="btn-gold" onClick={updateHairSalon} disabled={loading}>
                         Save Salon Details
                     </button>
@@ -94,8 +93,8 @@ export default function SalonPage({
             <section className="panel">
                 <SectionTitle title="Salon Working Hours" subtitle="Weekly Schedule" />
 
-                <div className="table-wrapper">
-                    <table>
+                <div className="table-wrapper admin-table-shell">
+                    <table className="admin-data-table admin-data-table-schedule">
                         <thead>
                             <tr>
                                 <th>Day</th>

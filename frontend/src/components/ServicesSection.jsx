@@ -93,13 +93,26 @@ export default function ServicesSection({
                             <LuxuryCard className="h-full overflow-hidden rounded-[20px] border border-[#c6934b45] bg-[linear-gradient(180deg,rgba(12,12,12,0.96),rgba(4,4,4,0.94))]">
                                 <div className={wide ? 'service-card-inner' : 'flex flex-col'}>
                                     <div
-                                        className={wide ? 'service-card-image' : 'aspect-[4/3] w-full bg-cover bg-center'}
-                                        style={{
-                                            backgroundImage: `linear-gradient(180deg, rgba(12,9,7,0.10), rgba(12,9,7,0.52)), url(${service.photoUrl || FALLBACK_IMAGE})`,
-                                            ...(wide ? {} : { backgroundSize: 'cover', backgroundPosition: 'center' })
-                                        }}
-                                        aria-label={service.name}
-                                    />
+                                        className={wide ? 'service-card-image' : 'relative aspect-[4/3] w-full overflow-hidden bg-[rgba(7,7,7,0.95)]'}
+                                    >
+                                        <img
+                                            src={service.photoUrl || FALLBACK_IMAGE}
+                                            alt=""
+                                            aria-hidden="true"
+                                            loading={wide && idx < 2 ? 'eager' : 'lazy'}
+                                            decoding="async"
+                                            fetchPriority={wide && idx === 0 ? 'high' : 'auto'}
+                                            className="h-full w-full object-cover"
+                                        />
+                                        <div
+                                            className="absolute inset-0"
+                                            aria-hidden="true"
+                                            style={{
+                                                background:
+                                                    'linear-gradient(180deg, rgba(12,9,7,0.10), rgba(12,9,7,0.52))'
+                                            }}
+                                        />
+                                    </div>
 
                                     <div className={wide ? 'service-card-content' : 'flex flex-col gap-4 p-5 sm:p-6'}>
                                         <div className="min-w-0 text-center">

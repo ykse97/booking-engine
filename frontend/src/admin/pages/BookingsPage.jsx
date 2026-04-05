@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
     CalendarClock,
+    Clock3,
     Mail,
     Phone,
     Scissors,
@@ -206,11 +207,11 @@ export default function BookingsPage({
                         </LuxuryCard>
 
                         <div className="admin-booking-datetime-grid">
-                            <div className="booking-date-panel">
+                            <div className="booking-date-panel admin-booking-calendar-panel">
                                 <BookingCalendar selectedDate={manualBookingDateObject} onSelect={onManualBookingDateSelect} />
                             </div>
 
-                            <div className="booking-time-panel">
+                            <div className="booking-time-panel admin-booking-time-panel">
                                 <TimeSlotList
                                     slots={manualBookingSlots}
                                     selectedSlot={manualBookingSelectedSlot}
@@ -222,107 +223,118 @@ export default function BookingsPage({
                         </div>
 
                         <LuxuryCard className="admin-booking-customer-card">
-                            <div className="booking-summary-badge">Customer Details</div>
-                            <div className="booking-form-grid admin-booking-form-grid">
-                                <label className="booking-form-field">
-                                    <span>
-                                        <UserRound size={15} />
-                                        Full name
-                                    </span>
-                                    <input
-                                        className="payment-input"
-                                        value={manualBookingForm.customerName}
-                                        onChange={(event) => {
-                                            setManualBookingForm((current) => ({ ...current, customerName: event.target.value }));
-                                            clearFieldError('adminBooking', 'customerName');
-                                        }}
-                                        placeholder="Customer full name"
-                                    />
-                                    {fieldErrors.adminBooking?.customerName ? (
-                                        <small>{fieldErrors.adminBooking.customerName}</small>
-                                    ) : null}
-                                </label>
-
-                                <label className="booking-form-field">
-                                    <span>
-                                        <Phone size={15} />
-                                        Phone number
-                                    </span>
-                                    <input
-                                        className="payment-input"
-                                        value={manualBookingForm.customerPhone}
-                                        onChange={(event) => {
-                                            setManualBookingForm((current) => ({ ...current, customerPhone: event.target.value }));
-                                            clearFieldError('adminBooking', 'customerPhone');
-                                        }}
-                                        placeholder="+353 87 000 0000"
-                                    />
-                                    {fieldErrors.adminBooking?.customerPhone ? (
-                                        <small>{fieldErrors.adminBooking.customerPhone}</small>
-                                    ) : null}
-                                </label>
+                            <div className="admin-card-heading">
+                                <div className="booking-summary-badge">Customer Details</div>
                             </div>
+                            <div className="admin-card-body">
+                                <div className="booking-form-grid admin-booking-form-grid">
+                                    <label className="booking-form-field">
+                                        <span>
+                                            <UserRound size={15} />
+                                            Full name
+                                        </span>
+                                        <input
+                                            className="payment-input"
+                                            value={manualBookingForm.customerName}
+                                            onChange={(event) => {
+                                                setManualBookingForm((current) => ({ ...current, customerName: event.target.value }));
+                                                clearFieldError('adminBooking', 'customerName');
+                                            }}
+                                            placeholder="Customer full name"
+                                        />
+                                        {fieldErrors.adminBooking?.customerName ? (
+                                            <small>{fieldErrors.adminBooking.customerName}</small>
+                                        ) : null}
+                                    </label>
 
-                            <div className="row">
-                                <GoldButton
-                                    type="button"
-                                    onClick={createAdminBooking}
-                                    disabled={
-                                        loading ||
-                                        !manualBookingSelectedSlot ||
-                                        !manualBookingBarberId ||
-                                        !manualBookingTreatmentId ||
-                                        !manualBookingForm.customerName.trim() ||
-                                        !manualBookingForm.customerPhone.trim()
-                                    }
-                                >
-                                    Update Slot
-                                </GoldButton>
+                                    <label className="booking-form-field">
+                                        <span>
+                                            <Phone size={15} />
+                                            Phone number
+                                        </span>
+                                        <input
+                                            className="payment-input"
+                                            value={manualBookingForm.customerPhone}
+                                            onChange={(event) => {
+                                                setManualBookingForm((current) => ({ ...current, customerPhone: event.target.value }));
+                                                clearFieldError('adminBooking', 'customerPhone');
+                                            }}
+                                            placeholder="+353 87 000 0000"
+                                        />
+                                        {fieldErrors.adminBooking?.customerPhone ? (
+                                            <small>{fieldErrors.adminBooking.customerPhone}</small>
+                                        ) : null}
+                                    </label>
+                                </div>
+
+                                <div className="row admin-card-actions">
+                                    <GoldButton
+                                        type="button"
+                                        onClick={createAdminBooking}
+                                        disabled={
+                                            loading ||
+                                            !manualBookingSelectedSlot ||
+                                            !manualBookingBarberId ||
+                                            !manualBookingTreatmentId ||
+                                            !manualBookingForm.customerName.trim() ||
+                                            !manualBookingForm.customerPhone.trim()
+                                        }
+                                    >
+                                        Update Slot
+                                    </GoldButton>
+                                </div>
+
+                                {sectionErrors.adminBooking ? <p className="section-error">{sectionErrors.adminBooking}</p> : null}
+                                {sectionSuccess.adminBooking ? <p className="section-ok">{sectionSuccess.adminBooking}</p> : null}
                             </div>
-
-                            {sectionErrors.adminBooking ? <p className="section-error">{sectionErrors.adminBooking}</p> : null}
-                            {sectionSuccess.adminBooking ? <p className="section-ok">{sectionSuccess.adminBooking}</p> : null}
                         </LuxuryCard>
                     </div>
 
                     <div className="admin-booking-aside">
-                        <LuxuryCard className="booking-summary-card">
-                            <div className="booking-summary-badge">Appointment Summary</div>
-                            <h2>Phone Booking Preview</h2>
-                            <p className="booking-summary-description">
-                                Confirm the slot details before you update the calendar and block the appointment on the public site.
-                            </p>
-                            <div className="ornament !mt-0 !w-full" />
-                            <div className="booking-summary-list">
-                                <div>
-                                    <span>
-                                        <Sparkles size={14} /> Service
+                        <LuxuryCard className="booking-summary-card admin-booking-summary-card">
+                            <div className="admin-summary-header">
+                                <div className="booking-summary-badge">Appointment Summary</div>
+                                <h2>Phone Booking Preview</h2>
+                                <p className="booking-summary-description">
+                                    Confirm the slot details before you update the calendar and block the appointment on the public site.
+                                </p>
+                            </div>
+                            <div className="ornament admin-summary-ornament !mt-0 !w-full" />
+                            <div className="booking-summary-list admin-booking-summary-list">
+                                <div className="admin-summary-list-item">
+                                    <span className="admin-summary-list-key">
+                                        <Sparkles size={14} />
+                                        <span className="admin-summary-list-label">Service</span>
                                     </span>
-                                    <strong>{selectedTreatment?.name || '--'}</strong>
+                                    <strong className="admin-summary-list-value">{selectedTreatment?.name || '--'}</strong>
                                 </div>
-                                <div>
-                                    <span>
-                                        <Scissors size={14} /> Barber
+                                <div className="admin-summary-list-item">
+                                    <span className="admin-summary-list-key">
+                                        <Scissors size={14} />
+                                        <span className="admin-summary-list-label">Barber</span>
                                     </span>
-                                    <strong>{selectedBarber?.name || '--'}</strong>
+                                    <strong className="admin-summary-list-value">{selectedBarber?.name || '--'}</strong>
                                 </div>
-                                <div>
-                                    <span>
-                                        <CalendarClock size={14} /> Date
+                                <div className="admin-summary-list-item">
+                                    <span className="admin-summary-list-key">
+                                        <CalendarClock size={14} />
+                                        <span className="admin-summary-list-label">Date</span>
                                     </span>
-                                    <strong>{formatBookingDate(manualBookingDate)}</strong>
+                                    <strong className="admin-summary-list-value">{formatBookingDate(manualBookingDate)}</strong>
                                 </div>
-                                <div>
-                                    <span>
-                                        <CalendarClock size={14} /> Time
+                                <div className="admin-summary-list-item">
+                                    <span className="admin-summary-list-key">
+                                        <Clock3 size={14} />
+                                        <span className="admin-summary-list-label">Time</span>
                                     </span>
-                                    <strong>{formatSlotLabel(manualBookingSelectedSlot)}</strong>
+                                    <strong className="admin-summary-list-value">{formatSlotLabel(manualBookingSelectedSlot)}</strong>
                                 </div>
-                                <div>
-                                    <span>
-                                        <Phone size={14} /> Phone
+                                <div className="admin-summary-list-item">
+                                    <span className="admin-summary-list-key">
+                                        <Phone size={14} />
+                                        <span className="admin-summary-list-label">Phone</span>
                                     </span>
-                                    <strong>{manualBookingForm.customerPhone || '--'}</strong>
+                                    <strong className="admin-summary-list-value">{manualBookingForm.customerPhone || '--'}</strong>
                                 </div>
                             </div>
                         </LuxuryCard>
@@ -362,8 +374,8 @@ export default function BookingsPage({
                     </div>
                 </div>
 
-                <div className="table-wrapper">
-                    <table>
+                <div className="table-wrapper admin-table-shell admin-table-shell-wide">
+                    <table className="admin-data-table admin-data-table-bookings">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -460,8 +472,8 @@ export default function BookingsPage({
                     </div>
                 </div>
 
-                <div className="table-wrapper">
-                    <table>
+                <div className="table-wrapper admin-table-shell admin-table-shell-wide">
+                    <table className="admin-data-table admin-data-table-bookings">
                         <thead>
                             <tr>
                                 <th>Status</th>
@@ -558,84 +570,90 @@ export default function BookingsPage({
 
                 <div className="admin-booking-blacklist-grid">
                     <LuxuryCard className="admin-blacklist-form-card">
-                        <div className="booking-summary-badge">Add To Blacklist</div>
-                        <div className="grid">
-                            <label className="booking-form-field">
-                                <span>
-                                    <Mail size={15} />
-                                    Email
-                                </span>
-                                <input
-                                    className="payment-input"
-                                    type="email"
-                                    value={bookingBlacklistForm.email}
-                                    onChange={(event) => {
-                                        setBookingBlacklistForm((current) => ({ ...current, email: event.target.value }));
-                                        clearFieldError('bookingBlacklist', 'email');
-                                    }}
-                                    placeholder="blocked@example.com"
-                                />
-                                {fieldErrors.bookingBlacklist?.email ? <small>{fieldErrors.bookingBlacklist.email}</small> : null}
-                            </label>
-
-                            <label className="booking-form-field">
-                                <span>
-                                    <Phone size={15} />
-                                    Phone
-                                </span>
-                                <input
-                                    className="payment-input"
-                                    value={bookingBlacklistForm.phone}
-                                    onChange={(event) => {
-                                        setBookingBlacklistForm((current) => ({ ...current, phone: event.target.value }));
-                                        clearFieldError('bookingBlacklist', 'phone');
-                                    }}
-                                    placeholder="+353 87 000 0000"
-                                />
-                                {fieldErrors.bookingBlacklist?.phone ? <small>{fieldErrors.bookingBlacklist.phone}</small> : null}
-                            </label>
-
-                            <label className="booking-form-field">
-                                <span>
-                                    <ShieldAlert size={15} />
-                                    Reason
-                                </span>
-                                <textarea
-                                    className="payment-input admin-textarea"
-                                    rows={4}
-                                    value={bookingBlacklistForm.reason}
-                                    onChange={(event) => {
-                                        setBookingBlacklistForm((current) => ({ ...current, reason: event.target.value }));
-                                        clearFieldError('bookingBlacklist', 'reason');
-                                    }}
-                                    placeholder="Repeated no-shows, abusive behavior, chargeback fraud..."
-                                />
-                                {fieldErrors.bookingBlacklist?.reason ? <small>{fieldErrors.bookingBlacklist.reason}</small> : null}
-                            </label>
+                        <div className="admin-card-heading">
+                            <div className="booking-summary-badge">Add To Blacklist</div>
                         </div>
+                        <div className="admin-card-body">
+                            <div className="grid admin-blacklist-form-grid">
+                                <label className="booking-form-field">
+                                    <span>
+                                        <Mail size={15} />
+                                        Email
+                                    </span>
+                                    <input
+                                        className="payment-input"
+                                        type="email"
+                                        value={bookingBlacklistForm.email}
+                                        onChange={(event) => {
+                                            setBookingBlacklistForm((current) => ({ ...current, email: event.target.value }));
+                                            clearFieldError('bookingBlacklist', 'email');
+                                        }}
+                                        placeholder="blocked@example.com"
+                                    />
+                                    {fieldErrors.bookingBlacklist?.email ? <small>{fieldErrors.bookingBlacklist.email}</small> : null}
+                                </label>
 
-                        <div className="row">
-                            <GoldButton
-                                type="button"
-                                onClick={createBookingBlacklistEntry}
-                                disabled={loading || (!bookingBlacklistForm.email.trim() && !bookingBlacklistForm.phone.trim())}
-                            >
-                                Save Blacklist Entry
-                            </GoldButton>
+                                <label className="booking-form-field">
+                                    <span>
+                                        <Phone size={15} />
+                                        Phone
+                                    </span>
+                                    <input
+                                        className="payment-input"
+                                        value={bookingBlacklistForm.phone}
+                                        onChange={(event) => {
+                                            setBookingBlacklistForm((current) => ({ ...current, phone: event.target.value }));
+                                            clearFieldError('bookingBlacklist', 'phone');
+                                        }}
+                                        placeholder="+353 87 000 0000"
+                                    />
+                                    {fieldErrors.bookingBlacklist?.phone ? <small>{fieldErrors.bookingBlacklist.phone}</small> : null}
+                                </label>
+
+                                <label className="booking-form-field">
+                                    <span>
+                                        <ShieldAlert size={15} />
+                                        Reason
+                                    </span>
+                                    <textarea
+                                        className="payment-input admin-textarea"
+                                        rows={4}
+                                        value={bookingBlacklistForm.reason}
+                                        onChange={(event) => {
+                                            setBookingBlacklistForm((current) => ({ ...current, reason: event.target.value }));
+                                            clearFieldError('bookingBlacklist', 'reason');
+                                        }}
+                                        placeholder="Repeated no-shows, abusive behavior, chargeback fraud..."
+                                    />
+                                    {fieldErrors.bookingBlacklist?.reason ? <small>{fieldErrors.bookingBlacklist.reason}</small> : null}
+                                </label>
+                            </div>
+
+                            <div className="row admin-card-actions admin-blacklist-actions">
+                                <GoldButton
+                                    type="button"
+                                    onClick={createBookingBlacklistEntry}
+                                    disabled={loading || (!bookingBlacklistForm.email.trim() && !bookingBlacklistForm.phone.trim())}
+                                >
+                                    Save Blacklist Entry
+                                </GoldButton>
+                            </div>
                         </div>
                     </LuxuryCard>
 
                     <LuxuryCard className="admin-blacklist-list-card">
-                        <div className="booking-summary-badge">Active Restrictions</div>
-
-                        <div className="row">
-                            <button type="button" className="btn-gold" onClick={refreshBookingBlacklist} disabled={loading}>
-                                Refresh Blacklist
-                            </button>
+                        <div className="admin-card-heading">
+                            <div className="booking-summary-badge">Active Restrictions</div>
                         </div>
+                        <div className="admin-card-body admin-blacklist-list-body">
+                            <div className="row admin-card-actions admin-blacklist-toolbar">
+                                <button type="button" className="btn-gold" onClick={refreshBookingBlacklist} disabled={loading}>
+                                    Refresh Blacklist
+                                </button>
+                            </div>
 
-                        <div className="table-wrapper">
-                            <table>
+                            <div className="table-wrapper admin-table-shell admin-table-shell-wide">
+                                <table className="admin-data-table admin-data-table-blacklist">
                                 <thead>
                                     <tr>
                                         <th>Email</th>
@@ -671,7 +689,8 @@ export default function BookingsPage({
                                         ))
                                     )}
                                 </tbody>
-                            </table>
+                                </table>
+                            </div>
                         </div>
                     </LuxuryCard>
                 </div>

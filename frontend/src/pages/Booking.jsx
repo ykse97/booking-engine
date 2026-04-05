@@ -25,7 +25,10 @@ import GoldButton from '../components/ui/GoldButton';
 import SectionTitle from '../components/ui/SectionTitle';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import { publicApi, PublicApiError } from '../api/publicApi';
+import { primeStripeOrigin } from '../utils/stripeHints';
 import { scrollWindowToElement } from '../utils/scroll';
+import '../styles/booking-shared.css';
+import '../styles/booking.css';
 
 const FALLBACK_TREATMENT_IMAGE =
     'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=1200&q=80';
@@ -172,6 +175,10 @@ export default function Booking() {
     const [checkoutConfigError, setCheckoutConfigError] = useState('');
     const [stripeModalOpen, setStripeModalOpen] = useState(false);
     useBodyScrollLock(Boolean(bookingResult));
+
+    useEffect(() => {
+        primeStripeOrigin();
+    }, []);
 
     const sortedTreatments = useMemo(
         () => [...treatments].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
@@ -1070,7 +1077,7 @@ export default function Booking() {
                             {catalogLoading ? <LuxuryCard className="text-center text-smoke">Loading services...</LuxuryCard> : null}
                             {!catalogLoading ? (
                                 <div className="booking-card-grid">
-                                    {sortedTreatments.map((treatment) => (
+                                    {sortedTreatments.map((treatment, index) => (
                                         <button
                                             key={treatment.id}
                                             type="button"
@@ -1083,11 +1090,24 @@ export default function Booking() {
                                         >
                                             <div
                                                 className="booking-choice-media"
-                                                style={{
-                                                    backgroundImage: `linear-gradient(180deg, rgba(12, 9, 7, 0.1), rgba(12, 9, 7, 0.7)), url(${treatment.photoUrl || FALLBACK_TREATMENT_IMAGE
-                                                        })`
-                                                }}
-                                            />
+                                            >
+                                                <img
+                                                    src={treatment.photoUrl || FALLBACK_TREATMENT_IMAGE}
+                                                    alt=""
+                                                    aria-hidden="true"
+                                                    loading={index < 2 ? 'eager' : 'lazy'}
+                                                    decoding="async"
+                                                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                                                />
+                                                <div
+                                                    className="booking-choice-media-overlay"
+                                                    aria-hidden="true"
+                                                    style={{
+                                                        background:
+                                                            'linear-gradient(180deg, rgba(12, 9, 7, 0.1), rgba(12, 9, 7, 0.7))'
+                                                    }}
+                                                />
+                                            </div>
                                             <div className="booking-choice-body">
                                                 <h3>{treatment.name}</h3>
                                                 <p>{treatment.description}</p>
@@ -1122,7 +1142,7 @@ export default function Booking() {
                             {catalogLoading ? <LuxuryCard className="text-center text-smoke">Loading barbers...</LuxuryCard> : null}
                             {!catalogLoading ? (
                                 <div className="booking-card-grid booking-card-grid-barbers">
-                                    {sortedBarbers.map((barber) => (
+                                    {sortedBarbers.map((barber, index) => (
                                         <button
                                             key={barber.id}
                                             type="button"
@@ -1135,11 +1155,24 @@ export default function Booking() {
                                         >
                                             <div
                                                 className="booking-choice-media booking-choice-media-barber"
-                                                style={{
-                                                    backgroundImage: `linear-gradient(180deg, rgba(12, 9, 7, 0.15), rgba(12, 9, 7, 0.72)), url(${barber.photoUrl || FALLBACK_BARBER_IMAGE
-                                                        })`
-                                                }}
-                                            />
+                                            >
+                                                <img
+                                                    src={barber.photoUrl || FALLBACK_BARBER_IMAGE}
+                                                    alt=""
+                                                    aria-hidden="true"
+                                                    loading={index < 2 ? 'eager' : 'lazy'}
+                                                    decoding="async"
+                                                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                                                />
+                                                <div
+                                                    className="booking-choice-media-overlay"
+                                                    aria-hidden="true"
+                                                    style={{
+                                                        background:
+                                                            'linear-gradient(180deg, rgba(12, 9, 7, 0.15), rgba(12, 9, 7, 0.72))'
+                                                    }}
+                                                />
+                                            </div>
                                             <div className="booking-choice-body">
                                                 <h3>{barber.name}</h3>
                                                 <div className="text-[11px] uppercase tracking-[0.18em] text-goldBright">

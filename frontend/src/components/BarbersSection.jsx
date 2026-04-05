@@ -69,12 +69,26 @@ export default function BarbersSection() {
                         >
                             <LuxuryCard className="h-full overflow-hidden rounded-[20px] border border-[#c6934b45] bg-[linear-gradient(180deg,rgba(12,12,12,0.96),rgba(4,4,4,0.94))]">
                                 <div
-                                    className="aspect-[4/3] w-full bg-cover bg-center"
-                                    style={{
-                                        backgroundImage: `linear-gradient(180deg, rgba(12,9,7,0.1), rgba(12,9,7,0.6)), url(${barber.photoUrl || FALLBACK_IMAGE})`
-                                    }}
-                                    aria-label={barber.name}
-                                />
+                                    className="relative aspect-[4/3] w-full overflow-hidden bg-[rgba(7,7,7,0.95)]"
+                                >
+                                    <img
+                                        src={barber.photoUrl || FALLBACK_IMAGE}
+                                        alt=""
+                                        aria-hidden="true"
+                                        loading="lazy"
+                                        decoding="async"
+                                        fetchPriority={idx === 0 ? 'low' : 'auto'}
+                                        className="h-full w-full object-cover"
+                                    />
+                                    <div
+                                        className="absolute inset-0"
+                                        aria-hidden="true"
+                                        style={{
+                                            background:
+                                                'linear-gradient(180deg, rgba(12,9,7,0.1), rgba(12,9,7,0.6))'
+                                        }}
+                                    />
+                                </div>
 
                                 <div className="flex h-full flex-col gap-4 p-5 text-center sm:p-6">
                                     <div className="min-w-0 text-center">

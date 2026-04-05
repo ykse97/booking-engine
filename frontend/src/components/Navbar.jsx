@@ -252,6 +252,11 @@ export default function Navbar() {
                                 <img
                                     src="/logo-royal.jpg"
                                     alt="Royal Chair logo"
+                                    width="320"
+                                    height="320"
+                                    loading="eager"
+                                    decoding="async"
+                                    fetchPriority="high"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -299,6 +304,11 @@ export default function Navbar() {
                                 <img
                                     src="/logo-royal.jpg"
                                     alt="Royal Chair logo"
+                                    width="320"
+                                    height="320"
+                                    loading="eager"
+                                    decoding="async"
+                                    fetchPriority="high"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -337,6 +347,11 @@ export default function Navbar() {
                                 <img
                                     src="/logo-royal.jpg"
                                     alt="Royal Chair logo"
+                                    width="320"
+                                    height="320"
+                                    loading="lazy"
+                                    decoding="async"
+                                    fetchPriority="low"
                                     className="w-full h-full object-cover"
                                 />
                             </div>

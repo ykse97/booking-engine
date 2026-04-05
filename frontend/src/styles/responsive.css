@@ -51,31 +51,6 @@
         padding: 14px 20px;
     }
 
-    /* Tabs / pills */
-    .tab-pill {
-        font-size: 12px;
-        letter-spacing: 0.1em;
-    }
-
-    /* Time slots */
-    .time-slot {
-        font-size: 0.95rem;
-        line-height: 1.35;
-        letter-spacing: 0.02em;
-    }
-
-    /* Calendar */
-    .calendar-day {
-        font-size: 0.95rem;
-        line-height: 1;
-    }
-
-    /* Inputs */
-    .payment-input {
-        font-size: 16px;
-        line-height: 1.4;
-    }
-
     /* Service cards / reusable card text */
     .service-card-title {
         font-size: 1.08rem;

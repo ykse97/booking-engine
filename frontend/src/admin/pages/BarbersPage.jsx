@@ -177,8 +177,8 @@ export default function BarbersPage({
             <section id="admin-barbers-list" className="panel admin-workspace-section">
                 <SectionTitle title="Barber List" subtitle="Edit Existing Team" />
 
-                <div className="table-wrapper">
-                    <table>
+                <div className="table-wrapper admin-table-shell">
+                    <table className="admin-data-table admin-data-table-team">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -227,7 +227,7 @@ export default function BarbersPage({
             <section id="admin-barbers-reorder" className="panel admin-workspace-section">
                 <SectionTitle title="Reorder Barbers" subtitle="Display Sequence" />
 
-                <div className="row">
+                <div className="row admin-control-row">
                     <select value={reorderForm.id1} onChange={(event) => setReorderForm((current) => ({ ...current, id1: event.target.value }))}>
                         <option value="">Select first barber</option>
                         {sortedBarbers.map((item) => (
@@ -258,7 +258,7 @@ export default function BarbersPage({
             <section id="admin-barbers-period" className="panel admin-workspace-section">
                 <SectionTitle title="Barber Schedule (per period)" subtitle="Bulk Schedule Updates" />
 
-                <div className="row">
+                <div className="row admin-control-row admin-control-row-schedule">
                     <select value={periodTargetBarberId} onChange={(event) => setPeriodTargetBarberId(event.target.value)}>
                         <option value={allBarbersOption}>All barbers</option>
                         {sortedBarbers.map((item) => (
@@ -282,8 +282,8 @@ export default function BarbersPage({
                     />
                 </div>
 
-                <div className="table-wrapper">
-                    <table>
+                <div className="table-wrapper admin-table-shell">
+                    <table className="admin-data-table admin-data-table-schedule">
                         <thead>
                             <tr>
                                 <th>Day</th>
@@ -356,7 +356,7 @@ export default function BarbersPage({
             <section id="admin-barbers-date" className="panel admin-workspace-section">
                 <SectionTitle title="Barber Schedule (per date)" subtitle="Single-Day Override" />
 
-                <div className="row">
+                <div className="row admin-control-row admin-control-row-schedule">
                     <select value={selectedBarberId} onChange={(event) => setSelectedBarberId(event.target.value)}>
                         <option value="">Select barber</option>
                         {sortedBarbers.map((item) => (
@@ -369,7 +369,7 @@ export default function BarbersPage({
                     <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
                 </div>
 
-                <div className="grid two barber-day-grid">
+                <div className="grid two barber-day-grid admin-form-grid-shell">
                     <label className="barber-toggle-field">
                         Working Day
                         <input

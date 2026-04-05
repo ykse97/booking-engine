@@ -51,6 +51,11 @@ export default function Footer() {
                                         <img
                                             src="/logo-royal.jpg"
                                             alt="Royal Chair logo"
+                                            width="320"
+                                            height="320"
+                                            loading="lazy"
+                                            decoding="async"
+                                            fetchPriority="low"
                                             className="h-full w-full object-cover"
                                         />
                                     </div>

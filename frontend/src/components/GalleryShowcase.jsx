@@ -75,6 +75,8 @@ export default function GalleryShowcase({
                                 src={img}
                                 alt={`Gallery item ${idx + 1}`}
                                 loading="lazy"
+                                decoding="async"
+                                fetchPriority="low"
                                 className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
                             />
                             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,3,3,0.06),rgba(3,3,3,0.64))]" />
@@ -115,6 +117,8 @@ export default function GalleryShowcase({
                             <img
                                 src={selectedImage}
                                 alt={`Gallery item ${selectedIndex + 1}`}
+                                loading="eager"
+                                decoding="async"
                                 className="h-full w-full object-contain"
                             />
 

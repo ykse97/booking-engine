@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ChevronDown, Scissors, Clock3, MapPin } from 'lucide-react';
+import '../styles/faq.css';
 
 const faqItems = [
     {
