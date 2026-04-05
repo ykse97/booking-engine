@@ -1,11 +1,11 @@
 export const gallery = [
-    "/gallery/g1.jpg",
-    "/gallery/g2.jpg",
-    "/gallery/g3.jpg",
-    "/gallery/g4.jpg",
-    "/gallery/g5.jpg",
-    "/gallery/g6.jpg",
-    "/gallery/g7.jpg",
-    "/gallery/g8.jpg",
-    "/gallery/g9.jpg"
+    "/gallery/g1.avif",
+    "/gallery/g2.avif",
+    "/gallery/g3.avif",
+    "/gallery/g4.avif",
+    "/gallery/g5.avif",
+    "/gallery/g6.avif",
+    "/gallery/g7.avif",
+    "/gallery/g8.avif",
+    "/gallery/g9.avif"
 ];
