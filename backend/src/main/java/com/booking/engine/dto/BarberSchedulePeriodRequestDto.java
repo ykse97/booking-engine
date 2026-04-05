@@ -20,18 +20,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BarberSchedulePeriodRequestDto {
 
-    @NotNull
+    @NotNull(message = "Start date is required")
     private LocalDate startDate;
 
-    @NotNull
+    @NotNull(message = "End date is required")
     private LocalDate endDate;
 
     private UUID barberId;
 
-    @NotNull
+    @NotNull(message = "Apply-to-all-barbers flag is required")
     private Boolean applyToAllBarbers;
 
     @Valid
-    @NotEmpty
+    @NotEmpty(message = "At least one weekday configuration is required")
     private List<BarberSchedulePeriodDayRequestDto> days;
 }

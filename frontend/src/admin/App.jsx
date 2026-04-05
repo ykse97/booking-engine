@@ -34,6 +34,36 @@ function dateToIso(date) {
     return `${year}-${month}-${day}`;
 }
 
+function isValidIsoDate(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const [year, month, day] = value.split('-').map((part) => Number.parseInt(part, 10));
+
+    if (!year || !month || !day) {
+        return false;
+    }
+
+    return dateToIso(new Date(year, month - 1, day)) === value;
+}
+
+function getBarberPeriodDateError(startDate, endDate) {
+    if (!isValidIsoDate(startDate)) {
+        return 'Please choose a real calendar start date before saving the period schedule.';
+    }
+
+    if (!isValidIsoDate(endDate)) {
+        return 'Please choose a real calendar end date before saving the period schedule.';
+    }
+
+    if (startDate > endDate) {
+        return 'The end date must be the same as or later than the start date.';
+    }
+
+    return '';
+}
+
 function emptyDayConfig() {
     return DAYS.map((day) => ({
         dayOfWeek: day,
@@ -686,6 +716,13 @@ function App() {
         const selectedBarberName = applyToAllBarbers
             ? 'all barbers'
             : sortedBarbers.find((item) => item.id === periodTargetBarberId)?.name || 'selected barber';
+        const periodDateError = getBarberPeriodDateError(periodStartDate, periodEndDate);
+
+        if (periodDateError) {
+            setLoading(false);
+            setSectionError('barberPeriodHours', periodDateError);
+            return;
+        }
 
         try {
             const response = await adminApi.upsertBarberPeriod({

@@ -268,8 +268,18 @@ export default function BarbersPage({
                         ))}
                     </select>
 
-                    <input type="date" value={periodStartDate} onChange={(event) => setPeriodStartDate(event.target.value)} />
-                    <input type="date" value={periodEndDate} onChange={(event) => setPeriodEndDate(event.target.value)} />
+                    <input
+                        type="date"
+                        value={periodStartDate}
+                        max={periodEndDate || undefined}
+                        onChange={(event) => setPeriodStartDate(event.target.value)}
+                    />
+                    <input
+                        type="date"
+                        value={periodEndDate}
+                        min={periodStartDate || undefined}
+                        onChange={(event) => setPeriodEndDate(event.target.value)}
+                    />
                 </div>
 
                 <div className="table-wrapper">

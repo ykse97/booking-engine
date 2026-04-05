@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BarberSchedulePeriodDayRequestDto {
 
-    @NotNull
+    @NotNull(message = "Day of week is required")
     private DayOfWeek dayOfWeek;
 
-    @NotNull
+    @NotNull(message = "Working-day flag is required")
     private Boolean workingDay;
 
     private LocalTime openTime;

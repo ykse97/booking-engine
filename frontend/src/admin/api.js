@@ -92,6 +92,16 @@ export function getApiErrorMessage(error) {
     if (!error) {
         return 'Unknown error';
     }
+    const fieldErrors = error.response?.data?.fieldErrors;
+    if (fieldErrors && typeof fieldErrors === 'object') {
+        const messages = [...new Set(Object.values(fieldErrors).filter(Boolean).map((value) => String(value).trim()))];
+        if (messages.length === 1) {
+            return messages[0];
+        }
+        if (messages.length > 1) {
+            return messages.join(' ');
+        }
+    }
     if (error.response?.data?.message) {
         return error.response.data.message;
     }

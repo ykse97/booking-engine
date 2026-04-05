@@ -62,10 +62,26 @@ class GlobalExceptionHandlerTest {
         assertThat(response).isNotNull();
         assertThat(response.status()).isEqualTo(400);
         assertThat(response.error()).isEqualTo("Validation Error");
-        assertThat(response.message()).isEqualTo("Request validation failed");
+        assertThat(response.message()).isEqualTo("Please review the highlighted fields and try again.");
         assertThat(response.fieldErrors()).containsEntry("name", "Name is required");
         assertThat(response.fieldErrors()).containsEntry("email", "Email is invalid");
         assertThat(response.path()).isEqualTo("/api/v1/test");
+    }
+
+    @Test
+    void handlesValidationErrorsWithFriendlyDefaultMessages() throws Exception {
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "payload");
+        bindingResult.addError(new FieldError("payload", "displayOrder", "must not be null"));
+
+        Method method = GlobalExceptionHandlerTest.class.getDeclaredMethod("sampleValidatedMethod", Object.class);
+        MethodArgumentNotValidException exception =
+                new MethodArgumentNotValidException(new MethodParameter(method, 0), bindingResult);
+
+        ValidationErrorResponse response = handler.handleValidationErrors(exception, request).getBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.message()).isEqualTo("Display order is required.");
+        assertThat(response.fieldErrors()).containsEntry("displayOrder", "Display order is required.");
     }
 
     @Test
@@ -160,6 +176,7 @@ class GlobalExceptionHandlerTest {
         assertThat(genericResponse.error()).isEqualTo("Internal Server Error");
         assertThat(genericResponse.message()).isEqualTo("An unexpected error occurred");
     }
+
     private void sampleValidatedMethod(Object ignored) {
     }
 }

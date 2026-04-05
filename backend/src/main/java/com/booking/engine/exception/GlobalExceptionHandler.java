@@ -1,5 +1,6 @@
 package com.booking.engine.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -9,11 +10,15 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -78,15 +83,74 @@ public class GlobalExceptionHandler {
                 .stream()
                 .collect(Collectors.toMap(
                         FieldError::getField,
-                        FieldError::getDefaultMessage,
+                        this::toFriendlyFieldMessage,
                         (existing, replacement) -> existing));
+
+        String message = fieldErrors.size() == 1
+                ? fieldErrors.values().iterator().next()
+                : "Please review the highlighted fields and try again.";
 
         ValidationErrorResponse response = new ValidationErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 ERROR_VALIDATION,
-                "Request validation failed",
+                message,
                 fieldErrors,
+                request.getRequestURI());
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * Handles malformed JSON payloads and invalid scalar formats.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        log.warn("Malformed request body for {}: {}",
+                request.getRequestURI(), ex.getMessage());
+
+        String message = "Some submitted values could not be read. Please review the form and try again.";
+        Throwable current = ex;
+        InvalidFormatException invalidFormat = null;
+
+        while (current != null) {
+            if (current instanceof InvalidFormatException formatException) {
+                invalidFormat = formatException;
+                break;
+            }
+            current = current.getCause();
+        }
+
+        if (invalidFormat != null) {
+            String fieldName = invalidFormat.getPath().isEmpty()
+                    ? null
+                    : invalidFormat.getPath().get(invalidFormat.getPath().size() - 1).getFieldName();
+            String fieldLabel = toFieldLabel(fieldName);
+            Class<?> targetType = invalidFormat.getTargetType();
+
+            if (LocalDate.class.equals(targetType)) {
+                message = fieldName != null
+                        ? "Please choose a real calendar date for " + fieldLabel + "."
+                        : "Please choose a real calendar date and try again.";
+            } else if (LocalTime.class.equals(targetType)) {
+                message = fieldName != null
+                        ? "Please enter a valid time for " + fieldLabel + "."
+                        : "Please enter a valid time and try again.";
+            } else {
+                message = fieldName != null
+                        ? fieldLabel + " contains an invalid value."
+                        : "One or more submitted values are invalid. Please review the form and try again.";
+            }
+        }
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ERROR_BAD_REQUEST,
+                message,
                 request.getRequestURI());
 
         return ResponseEntity.badRequest().body(response);
@@ -294,5 +358,73 @@ public class GlobalExceptionHandler {
                 request.getRequestURI());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /*
+     * Rewrites framework-style validation messages into plain-language feedback
+     * so admins see what needs to be fixed without reading technical jargon.
+     *
+     * @param error Spring field validation error
+     * @return admin-friendly validation message
+     */
+    private String toFriendlyFieldMessage(FieldError error) {
+        String fieldLabel = toFieldLabel(error.getField());
+        String rawMessage = error.getDefaultMessage();
+
+        if (rawMessage == null || rawMessage.isBlank()) {
+            return fieldLabel + " is invalid.";
+        }
+
+        String normalizedMessage = rawMessage.trim();
+        String lowerCaseMessage = normalizedMessage.toLowerCase(Locale.ROOT);
+
+        if (lowerCaseMessage.equals("must not be null")
+                || lowerCaseMessage.equals("must not be blank")
+                || lowerCaseMessage.equals("must not be empty")
+                || lowerCaseMessage.equals("не должно равняться null")
+                || lowerCaseMessage.equals("не должно быть пустым")) {
+            return fieldLabel + " is required.";
+        }
+
+        if (lowerCaseMessage.startsWith("must be greater than or equal to ")) {
+            String minValue = normalizedMessage.substring("must be greater than or equal to ".length());
+            return fieldLabel + " must be " + minValue + " or greater.";
+        }
+
+        if (lowerCaseMessage.startsWith("must be less than or equal to ")) {
+            String maxValue = normalizedMessage.substring("must be less than or equal to ".length());
+            return fieldLabel + " must be " + maxValue + " or less.";
+        }
+
+        if (lowerCaseMessage.startsWith("size must be between ")) {
+            return fieldLabel + " length is outside the allowed range.";
+        }
+
+        return normalizedMessage;
+    }
+
+    /*
+     * Converts raw field names like "applyToAllBarbers" into readable labels
+     * that work better in UI-facing validation and parsing messages.
+     *
+     * @param fieldName raw binding field name
+     * @return human-readable field label
+     */
+    private String toFieldLabel(String fieldName) {
+        if (fieldName == null || fieldName.isBlank()) {
+            return "This field";
+        }
+
+        String simplified = fieldName.replaceAll(".*\\.", "").replaceAll("\\[[^\\]]*\\]", "");
+        simplified = simplified.replaceAll("([a-z])([A-Z])", "$1 $2")
+                .replace('_', ' ')
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        if (simplified.isEmpty()) {
+            return "This field";
+        }
+
+        return Character.toUpperCase(simplified.charAt(0)) + simplified.substring(1);
     }
 }
