@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import { useReducedMotion } from 'framer-motion';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionTitle from './ui/SectionTitle';
 import GoldButton from './ui/GoldButton';
 import { gallery } from '../data/gallery';
-import useBodyScrollLock from '../hooks/useBodyScrollLock';
+
+const TWEEN_FACTOR_BASE = 0.26;
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max));
+}
 
 export default function GalleryShowcase({
     sectionId = 'gallery',
@@ -15,132 +21,225 @@ export default function GalleryShowcase({
     showBookingButton = true
 }) {
     const navigate = useNavigate();
-    const [selectedIndex, setSelectedIndex] = useState(null);
-
-    const selectedImage = selectedIndex != null ? gallery[selectedIndex] : null;
-    useBodyScrollLock(selectedImage != null);
+    const shouldReduceMotion = useReducedMotion();
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [emblaRef, emblaApi] = useEmblaCarousel({
+        align: 'center',
+        containScroll: 'keepSnaps',
+        dragFree: false,
+        duration: shouldReduceMotion ? 20 : 36,
+        inViewThreshold: 0.2,
+        loop: true,
+        skipSnaps: false,
+        slidesToScroll: 1
+    });
 
     useEffect(() => {
-        if (selectedIndex == null) {
+        if (!emblaApi) {
             return undefined;
         }
 
-        function handleKeyDown(event) {
-            if (event.key === 'Escape') {
-                setSelectedIndex(null);
-            }
-
-            if (event.key === 'ArrowLeft') {
-                setSelectedIndex((current) => (current == null ? 0 : (current - 1 + gallery.length) % gallery.length));
-            }
-
-            if (event.key === 'ArrowRight') {
-                setSelectedIndex((current) => (current == null ? 0 : (current + 1) % gallery.length));
-            }
+        function setSelectedSlide() {
+            setSelectedIndex(emblaApi.selectedScrollSnap());
         }
 
-        window.addEventListener('keydown', handleKeyDown);
+        function tweenSlides(eventName = 'scroll') {
+            const engine = emblaApi.internalEngine();
+            const scrollProgress = emblaApi.scrollProgress();
+            const slidesInView = emblaApi.slidesInView();
+            const isScrollEvent = eventName === 'scroll';
+            const tweenFactor = TWEEN_FACTOR_BASE * emblaApi.scrollSnapList().length;
+
+            emblaApi.scrollSnapList().forEach((scrollSnap, snapIndex) => {
+                const slidesInSnap = engine.slideRegistry[snapIndex];
+
+                slidesInSnap.forEach((slideIndex) => {
+                    if (isScrollEvent && !slidesInView.includes(slideIndex)) {
+                        return;
+                    }
+
+                    let diffToTarget = scrollSnap - scrollProgress;
+
+                    if (engine.options.loop) {
+                        engine.slideLooper.loopPoints.forEach((loopPoint) => {
+                            const target = loopPoint.target();
+
+                            if (slideIndex !== loopPoint.index || target === 0) {
+                                return;
+                            }
+
+                            const sign = Math.sign(target);
+
+                            if (sign === -1) {
+                                diffToTarget = scrollSnap - (1 + scrollProgress);
+                            }
+
+                            if (sign === 1) {
+                                diffToTarget = scrollSnap + (1 - scrollProgress);
+                            }
+                        });
+                    }
+
+                    const tweenValue = 1 - Math.abs(diffToTarget * tweenFactor);
+                    const visibility = clamp(tweenValue, 0.18, 1);
+                    const scale = clamp(0.62 + visibility * 0.38, 0.62, 1);
+                    const opacity = clamp(0.22 + visibility * 0.78, 0.22, 1);
+                    const blur = shouldReduceMotion ? 0 : clamp((1 - visibility) * 1.8, 0, 1.6);
+                    const brightness = clamp(0.78 + visibility * 0.24, 0.78, 1.02);
+                    const saturate = clamp(0.78 + visibility * 0.28, 0.78, 1.06);
+                    const translateY = shouldReduceMotion ? 0 : (1 - visibility) * 18;
+                    const slideNode = emblaApi.slideNodes()[slideIndex];
+
+                    if (!slideNode) {
+                        return;
+                    }
+
+                    slideNode.style.setProperty('--gallery-slide-scale', scale.toFixed(3));
+                    slideNode.style.setProperty('--gallery-slide-opacity', opacity.toFixed(3));
+                    slideNode.style.setProperty('--gallery-slide-blur', `${blur.toFixed(2)}px`);
+                    slideNode.style.setProperty('--gallery-slide-brightness', brightness.toFixed(3));
+                    slideNode.style.setProperty('--gallery-slide-saturate', saturate.toFixed(3));
+                    slideNode.style.setProperty('--gallery-slide-translate-y', `${translateY.toFixed(2)}px`);
+                    slideNode.style.zIndex = String(Math.round(visibility * 100));
+                });
+            });
+        }
+
+        function handleReInit() {
+            setSelectedSlide();
+            tweenSlides('reInit');
+        }
+
+        function handleSelect() {
+            setSelectedSlide();
+            tweenSlides('select');
+        }
+
+        function handleScroll() {
+            tweenSlides('scroll');
+        }
+
+        handleReInit();
+
+        emblaApi.on('reInit', handleReInit);
+        emblaApi.on('select', handleSelect);
+        emblaApi.on('scroll', handleScroll);
+        emblaApi.on('slideFocus', handleSelect);
 
         return () => {
-            window.removeEventListener('keydown', handleKeyDown);
+            emblaApi.off('reInit', handleReInit);
+            emblaApi.off('select', handleSelect);
+            emblaApi.off('scroll', handleScroll);
+            emblaApi.off('slideFocus', handleSelect);
         };
-    }, [selectedIndex]);
+    }, [emblaApi, shouldReduceMotion]);
 
     function showPreviousImage() {
-        setSelectedIndex((current) => (current == null ? 0 : (current - 1 + gallery.length) % gallery.length));
+        emblaApi?.scrollPrev();
     }
 
     function showNextImage() {
-        setSelectedIndex((current) => (current == null ? 0 : (current + 1) % gallery.length));
+        emblaApi?.scrollNext();
+    }
+
+    function handleCarouselKeyDown(event) {
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            showPreviousImage();
+        }
+
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            showNextImage();
+        }
+
+        if (event.key === 'Home') {
+            event.preventDefault();
+            emblaApi?.scrollTo(0);
+        }
+
+        if (event.key === 'End') {
+            event.preventDefault();
+            emblaApi?.scrollTo(gallery.length - 1);
+        }
     }
 
     return (
         <section className={className} id={sectionId}>
             <SectionTitle title={title} subtitle={subtitle} />
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {gallery.map((img, idx) => (
-                    <motion.button
-                        key={img}
-                        type="button"
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: idx * 0.03 }}
-                        onClick={() => setSelectedIndex(idx)}
-                        className="group relative overflow-hidden rounded-[20px] border border-[#c6934b38] bg-[linear-gradient(180deg,rgba(12,12,12,0.96),rgba(4,4,4,0.94))] p-[10px] text-left shadow-card"
+            <div className="gallery-carousel-breakout">
+                <div
+                    className="gallery-carousel-shell mt-8"
+                    role="region"
+                    aria-roledescription="carousel"
+                    aria-label={`${title} gallery`}
+                >
+                    <p className="sr-only" aria-live="polite">
+                        Showing gallery image {selectedIndex + 1} of {gallery.length}
+                    </p>
+
+                    <div
+                        ref={emblaRef}
+                        className="gallery-embla"
+                        tabIndex={0}
+                        onKeyDown={handleCarouselKeyDown}
+                        aria-label="Gallery carousel viewport"
                     >
-                        <div className="relative aspect-[4/5] overflow-hidden rounded-[16px] border border-[#f2d79f1f] bg-[rgba(7,7,7,0.95)]">
-                            <img
-                                src={img}
-                                alt={`Gallery item ${idx + 1}`}
-                                loading="lazy"
-                                decoding="async"
-                                fetchPriority="low"
-                                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                            />
-                            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,3,3,0.06),rgba(3,3,3,0.64))]" />
+                        <div className="gallery-embla__container">
+                            {gallery.map((item, index) => (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    className={`gallery-embla__slide${index === selectedIndex ? ' is-selected' : ''}`}
+                                    onClick={() => emblaApi?.scrollTo(index)}
+                                    aria-label={
+                                        index === selectedIndex
+                                            ? `${item.alt}, current gallery image`
+                                            : `Focus ${item.alt}`
+                                    }
+                                    aria-current={index === selectedIndex ? 'true' : undefined}
+                                >
+                                    <span className="gallery-embla__slide-card">
+                                        <img
+                                            src={item.src}
+                                            alt={item.alt}
+                                            loading={index < 3 ? 'eager' : 'lazy'}
+                                            decoding="async"
+                                            fetchPriority={index === 0 ? 'high' : 'low'}
+                                            className="gallery-embla__image"
+                                        />
+                                    </span>
+                                </button>
+                            ))}
                         </div>
-                    </motion.button>
-                ))}
+                    </div>
+
+                    <div className="gallery-carousel-controls">
+                        <button
+                            type="button"
+                            onClick={showPreviousImage}
+                            className="gallery-carousel-nav"
+                            aria-label="Show previous gallery image"
+                        >
+                            <ArrowLeft size={22} />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={showNextImage}
+                            className="gallery-carousel-nav"
+                            aria-label="Show next gallery image"
+                        >
+                            <ArrowRight size={22} />
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {showBookingButton ? (
                 <div className="mt-6 flex justify-center">
                     <GoldButton onClick={() => navigate('/booking')}>Book Appointment</GoldButton>
-                </div>
-            ) : null}
-
-            {selectedImage ? (
-                <div
-                    className="fixed inset-x-0 bottom-0 top-[var(--site-header-height)] z-[120] bg-[rgba(3,3,3,0.9)] px-3 py-3 backdrop-blur-xl sm:px-5 sm:py-4 lg:px-8 lg:py-6"
-                    onClick={() => setSelectedIndex(null)}
-                    role="presentation"
-                >
-                    <div
-                        className="relative mx-auto flex h-full w-full max-w-[1760px] items-center justify-center"
-                        onClick={(event) => event.stopPropagation()}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={`Gallery image ${selectedIndex + 1}`}
-                    >
-                        <button
-                            type="button"
-                            onClick={() => setSelectedIndex(null)}
-                            className="absolute right-1 top-1 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#c6934b45] bg-[rgba(6,6,6,0.94)] text-[#f5dfb1] shadow-[0_12px_30px_rgba(0,0,0,0.32)] transition hover:border-[#e3c07a] hover:text-[#fff1cf] sm:right-2 sm:top-2 sm:h-12 sm:w-12 lg:right-3 lg:top-3"
-                            aria-label="Close gallery image"
-                        >
-                            <X size={20} />
-                        </button>
-
-                        <div className="relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden rounded-[24px] border border-[#c6934b52] bg-[radial-gradient(circle_at_top,rgba(227,192,122,0.08),transparent_28%),linear-gradient(180deg,rgba(10,10,10,0.98),rgba(2,2,2,0.99))] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.48)] sm:rounded-[28px] sm:p-4 lg:rounded-[32px] lg:p-6">
-                            <img
-                                src={selectedImage}
-                                alt={`Gallery item ${selectedIndex + 1}`}
-                                loading="eager"
-                                decoding="async"
-                                className="h-full w-full object-contain"
-                            />
-
-                            <button
-                                type="button"
-                                onClick={showPreviousImage}
-                                className="absolute left-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#c6934b42] bg-[rgba(6,6,6,0.84)] text-[#f5dfb1] shadow-[0_10px_24px_rgba(0,0,0,0.26)] transition hover:border-[#e3c07a] hover:text-[#fff1cf] sm:left-5 sm:h-12 sm:w-12 lg:left-6 lg:h-14 lg:w-14"
-                                aria-label="Show previous gallery image"
-                            >
-                                <ChevronLeft size={22} />
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={showNextImage}
-                                className="absolute right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#c6934b42] bg-[rgba(6,6,6,0.84)] text-[#f5dfb1] shadow-[0_10px_24px_rgba(0,0,0,0.26)] transition hover:border-[#e3c07a] hover:text-[#fff1cf] sm:right-5 sm:h-12 sm:w-12 lg:right-6 lg:h-14 lg:w-14"
-                                aria-label="Show next gallery image"
-                            >
-                                <ChevronRight size={22} />
-                            </button>
-                        </div>
-                    </div>
                 </div>
             ) : null}
         </section>
