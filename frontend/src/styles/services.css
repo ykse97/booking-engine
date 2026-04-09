@@ -211,6 +211,24 @@
         0 12px 22px rgba(0, 0, 0, 0.26);
 }
 
+#barbers .barbers-grid-shell {
+    width: 100%;
+}
+
+#barbers .barbers-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+}
+
+#barbers .barbers-card-shell {
+    min-width: 0;
+}
+
+#barbers .barbers-card {
+    height: 100%;
+}
+
 #gallery {
     position: relative;
 }
@@ -339,10 +357,8 @@
     height: var(--gallery-slide-height);
     overflow: hidden;
     border-radius: clamp(1.75rem, 3vw, 2.25rem);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.07), transparent 38%),
-        linear-gradient(180deg, rgba(18, 18, 18, 0.98), rgba(5, 5, 5, 0.94));
+    border: 1px solid transparent;
+    background: transparent;
     transform: translate3d(0, var(--gallery-slide-translate-y), 0) scale(var(--gallery-slide-scale));
     transform-origin: center center;
     opacity: var(--gallery-slide-opacity);
@@ -350,10 +366,7 @@
         blur(var(--gallery-slide-blur))
         saturate(var(--gallery-slide-saturate))
         brightness(var(--gallery-slide-brightness));
-    box-shadow:
-        0 24px 50px rgba(0, 0, 0, 0.34),
-        0 0 24px rgba(213, 164, 93, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: none;
     transition: border-color 0.22s ease, box-shadow 0.22s ease;
     will-change: transform, opacity, filter;
 }
@@ -363,8 +376,8 @@
     position: absolute;
     inset: 0;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 34%),
-        linear-gradient(180deg, rgba(3, 3, 3, 0.02), rgba(3, 3, 3, 0.22));
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 32%),
+        linear-gradient(180deg, rgba(3, 3, 3, 0.01), rgba(3, 3, 3, 0.14));
     pointer-events: none;
 }
 
@@ -373,22 +386,20 @@
     height: 100%;
     display: block;
     object-fit: cover;
+    border-radius: inherit;
+    box-shadow:
+        0 24px 50px rgba(0, 0, 0, 0.26),
+        0 0 24px rgba(213, 164, 93, 0.06);
 }
 
 #gallery .gallery-embla__slide:hover .gallery-embla__slide-card {
-    border-color: rgba(244, 220, 169, 0.22);
-    box-shadow:
-        0 28px 54px rgba(0, 0, 0, 0.36),
-        0 0 28px rgba(213, 164, 93, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: transparent;
+    box-shadow: none;
 }
 
 #gallery .gallery-embla__slide.is-selected .gallery-embla__slide-card {
-    border-color: rgba(244, 220, 169, 0.28);
-    box-shadow:
-        0 32px 64px rgba(0, 0, 0, 0.38),
-        0 0 34px rgba(213, 164, 93, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border-color: transparent;
+    box-shadow: none;
 }
 
 #gallery .gallery-carousel-controls {
@@ -454,6 +465,11 @@
         font-size: 1.05rem;
     }
 
+    #barbers .barbers-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+
     #gallery .gallery-carousel-controls {
         gap: 1.5rem;
     }
@@ -495,6 +511,33 @@
         font-size: 16px;
     }
 
+    #barbers .barbers-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #barbers .barbers-grid--remainder-1 > :last-child {
+        grid-column: 2;
+    }
+
+    #barbers .barbers-grid--remainder-2 > :last-child {
+        grid-column: 3;
+    }
+
+    #barbers .barbers-grid-shell--breakout {
+        position: relative;
+        left: 50%;
+        width: 100vw;
+        margin-left: -50vw;
+    }
+
+    #barbers .barbers-grid-shell--breakout .barbers-grid {
+        max-width: min(100vw - 3rem, 96rem);
+        margin: 0 auto;
+        padding-inline: 1.5rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: stretch;
+    }
+
     #gallery .gallery-carousel-shell {
         --gallery-slide-height: clamp(21rem, 32vw, 31rem);
         --gallery-slide-size: clamp(12rem, 18vw, 17.5rem);
@@ -515,6 +558,17 @@
     .service-card {
         flex-basis: calc((100% - 64px) / 3);
         max-width: calc((100% - 64px) / 3);
+    }
+
+    #barbers .barbers-grid {
+        gap: 1.75rem;
+    }
+
+    #barbers .barbers-grid-shell--breakout .barbers-grid {
+        max-width: min(100vw - 4rem, 100rem);
+        padding-inline: 2rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: stretch;
     }
 }
 
@@ -546,5 +600,249 @@
     #gallery .gallery-embla__slide-card,
     #gallery .gallery-carousel-nav {
         transition: none;
+    }
+}
+
+html[data-theme='light'] .service-card-image {
+    background: rgba(244, 236, 225, 0.92);
+}
+
+html[data-theme='light'] .service-card-title,
+html[data-theme='light'] #services .glass-card h3,
+html[data-theme='light'] #barbers .glass-card h3 {
+    color: #24170d;
+    text-shadow:
+        0 0 16px rgba(255, 255, 255, 0.34),
+        0 12px 22px rgba(178, 142, 98, 0.12);
+}
+
+html[data-theme='light'] .service-card-meta {
+    border-color: rgba(149, 95, 35, 0.12);
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.84), transparent 36%),
+        radial-gradient(circle at bottom right, rgba(195, 156, 103, 0.12), transparent 32%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.96), rgba(243, 234, 223, 0.94));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 12px 22px rgba(148, 111, 67, 0.1);
+}
+
+html[data-theme='light'] .service-card-meta-label {
+    color: rgba(70, 48, 26, 0.66);
+}
+
+html[data-theme='light'] .service-card-meta-value,
+html[data-theme='light'] .service-card-price {
+    color: #24170d;
+    text-shadow: none;
+}
+
+html[data-theme='light'] #services .glass-card .text-white {
+    color: #24170d;
+    text-shadow: none;
+}
+
+html[data-theme='light'] .services-intro > p:first-child {
+    color: rgba(70, 48, 26, 0.72);
+}
+
+html[data-theme='light'] .services-intro-text {
+    color: rgba(70, 48, 26, 0.8);
+}
+
+html[data-theme='light'] .services-intro h1 {
+    color: #24170d;
+    text-shadow:
+        0 0 18px rgba(255, 255, 255, 0.42),
+        0 14px 24px rgba(178, 142, 98, 0.14);
+}
+
+html[data-theme='light'] #services .glass-card,
+html[data-theme='light'] #barbers .glass-card {
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.88), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(195, 156, 103, 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(243, 234, 223, 0.95));
+    border-color: rgba(149, 95, 35, 0.12);
+    box-shadow:
+        0 22px 48px rgba(148, 111, 67, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+html[data-theme='light'] #services .glass-card:hover,
+html[data-theme='light'] #barbers .glass-card:hover {
+    border-color: rgba(149, 95, 35, 0.22);
+    box-shadow:
+        0 26px 54px rgba(148, 111, 67, 0.16),
+        0 0 24px rgba(196, 153, 95, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme='light'] #services .glass-card .flex.items-center.justify-between.gap-4 {
+    border-color: rgba(149, 95, 35, 0.12);
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.84), transparent 38%),
+        radial-gradient(circle at bottom right, rgba(195, 156, 103, 0.1), transparent 30%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.95), rgba(244, 235, 223, 0.93));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        0 12px 22px rgba(148, 111, 67, 0.08);
+}
+
+html[data-theme='light'] #services .glass-card > div:first-child,
+html[data-theme='light'] #barbers .glass-card > div:first-child {
+    box-shadow: inset 0 -28px 48px rgba(84, 57, 30, 0.1);
+}
+
+html[data-theme='light'] #services .glass-card > div:first-child::after,
+html[data-theme='light'] #barbers .glass-card > div:first-child::after {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(173, 132, 88, 0.12));
+}
+
+html[data-theme='light'] #barbers .glass-card p[class*='rounded-full'] {
+    color: #55351d;
+    border-color: rgba(149, 95, 35, 0.16);
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.86), transparent 42%),
+        linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(240, 229, 214, 0.96));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 10px 18px rgba(148, 111, 67, 0.1);
+}
+
+html[data-theme='light'] #gallery .gallery-carousel-shell::before {
+    display: none;
+}
+
+html[data-theme='light'] #gallery .gallery-carousel-shell::after {
+    display: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla:focus-visible {
+    box-shadow: 0 0 0 2px rgba(149, 95, 35, 0.18);
+}
+
+html[data-theme='light'] #gallery,
+html[data-theme='light'] #gallery .gallery-carousel-breakout,
+html[data-theme='light'] #gallery .gallery-carousel-shell,
+html[data-theme='light'] #gallery .gallery-embla,
+html[data-theme='light'] #gallery .gallery-embla__container {
+    background: transparent;
+    box-shadow: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla::before {
+    display: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla::after {
+    display: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla__slide:focus-visible {
+    outline-color: rgba(149, 95, 35, 0.24);
+}
+
+html[data-theme='light'] #gallery .gallery-embla__slide-card {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla__slide-card::after {
+    background: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla__slide:hover .gallery-embla__slide-card {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla__slide.is-selected .gallery-embla__slide-card {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+html[data-theme='light'] #gallery .gallery-embla__image {
+    box-shadow:
+        0 22px 44px rgba(148, 111, 67, 0.12),
+        0 0 20px rgba(196, 153, 95, 0.06);
+}
+
+html[data-theme='light'] #gallery .gallery-carousel-shell {
+    padding-inline: 0;
+}
+
+html[data-theme='light'] #gallery .gallery-carousel-nav {
+    color: #24170d;
+    border-color: rgba(149, 95, 35, 0.16);
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.9), transparent 38%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.98), rgba(240, 229, 214, 0.95));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 16px 28px rgba(148, 111, 67, 0.12);
+}
+
+html[data-theme='light'] #gallery .gallery-carousel-nav:hover {
+    border-color: rgba(149, 95, 35, 0.28);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        0 18px 30px rgba(148, 111, 67, 0.16),
+        0 0 22px rgba(196, 153, 95, 0.1);
+}
+
+html[data-theme='light'] #gallery .gallery-carousel-nav:focus-visible {
+    outline-color: rgba(149, 95, 35, 0.26);
+}
+
+@media (max-width: 639px) {
+    #gallery .gallery-carousel-shell {
+        --gallery-slide-spacing: 0.85rem;
+        --gallery-slide-half-spacing: calc(var(--gallery-slide-spacing) / 2);
+        --gallery-slide-height: clamp(27rem, 124vw, 39rem);
+        /* Keep the centered card narrower than the viewport so both side peeks remain visible. */
+        --gallery-slide-size: clamp(16.25rem, 76vw, 22rem);
+        padding-inline: 0;
+    }
+
+    #gallery .gallery-embla {
+        padding-block: 0.85rem 1.15rem;
+        padding-inline: 0.15rem;
+    }
+
+    #gallery .gallery-embla::before,
+    #gallery .gallery-embla::after {
+        width: 0.35rem;
+    }
+
+    #gallery .gallery-embla__container {
+        gap: 0;
+        margin-left: calc(var(--gallery-slide-half-spacing) * -1);
+        margin-right: calc(var(--gallery-slide-half-spacing) * -1);
+        min-height: calc(var(--gallery-slide-height) + 1.85rem);
+    }
+
+    #gallery .gallery-embla__slide {
+        padding-left: var(--gallery-slide-half-spacing);
+        padding-right: var(--gallery-slide-half-spacing);
+    }
+
+    #gallery .gallery-embla__slide-card {
+        border-radius: 2rem;
+    }
+
+    #gallery .gallery-carousel-controls {
+        margin-top: 1.7rem;
+        gap: 1.1rem;
+        padding-inline: 1rem;
+    }
+
+    #gallery .gallery-carousel-nav {
+        width: min(10rem, calc(50vw - 2rem));
+        height: 4rem;
+        border-radius: 1.75rem;
     }
 }

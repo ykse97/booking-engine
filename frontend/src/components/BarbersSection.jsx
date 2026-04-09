@@ -48,68 +48,80 @@ export default function BarbersSection() {
         () => [...barbers].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
         [barbers]
     );
+    const barberCount = sortedBarbers.length;
+    const gridVariantClass =
+        barberCount === 4
+            ? 'barbers-grid--four'
+            : barberCount > 3 && barberCount % 3 === 1
+              ? 'barbers-grid--remainder-1'
+              : barberCount > 3 && barberCount % 3 === 2
+                ? 'barbers-grid--remainder-2'
+                : '';
+    const gridShellClass = barberCount === 4 ? 'barbers-grid-shell barbers-grid-shell--breakout' : 'barbers-grid-shell';
 
     return (
         <section className="services-page-shell py-8" id="barbers">
-            <SectionTitle title="Meet Our Barbers" subtitle="master craftsmen" />
+            <SectionTitle title="Meet Our Team" subtitle="master craftsmen" />
 
             {loading ? <div className="text-center text-ivory/80">Loading barbers...</div> : null}
             {error ? <div className="text-center text-red-300">{error}</div> : null}
 
             {!loading && !error ? (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {sortedBarbers.map((barber, idx) => (
-                        <motion.div
-                            key={barber.id}
-                            className="h-full"
-                            initial={{ opacity: 0, y: 12 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.06 }}
-                        >
-                            <LuxuryCard className="h-full overflow-hidden rounded-[20px] border border-[#c6934b45] bg-[linear-gradient(180deg,rgba(12,12,12,0.96),rgba(4,4,4,0.94))]">
-                                <div
-                                    className="relative aspect-[4/3] w-full overflow-hidden bg-[rgba(7,7,7,0.95)]"
-                                >
-                                    <img
-                                        src={barber.photoUrl || FALLBACK_IMAGE}
-                                        alt=""
-                                        aria-hidden="true"
-                                        loading="lazy"
-                                        decoding="async"
-                                        fetchPriority={idx === 0 ? 'low' : 'auto'}
-                                        className="h-full w-full object-cover"
-                                    />
+                <div className={gridShellClass}>
+                    <div className={`barbers-grid ${gridVariantClass}`.trim()}>
+                        {sortedBarbers.map((barber, idx) => (
+                            <motion.div
+                                key={barber.id}
+                                className="barbers-card-shell h-full"
+                                initial={{ opacity: 0, y: 12 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.06 }}
+                            >
+                                <LuxuryCard className="barbers-card h-full overflow-hidden rounded-[20px] border border-[#c6934b45] bg-[linear-gradient(180deg,rgba(12,12,12,0.96),rgba(4,4,4,0.94))]">
                                     <div
-                                        className="absolute inset-0"
-                                        aria-hidden="true"
-                                        style={{
-                                            background:
-                                                'linear-gradient(180deg, rgba(12,9,7,0.1), rgba(12,9,7,0.6))'
-                                        }}
-                                    />
-                                </div>
-
-                                <div className="flex h-full flex-col gap-4 p-5 text-center sm:p-6">
-                                    <div className="min-w-0 text-center">
-                                        <h3 className="font-heading text-[1rem] leading-[1.45] tracking-[0.14em] uppercase text-ivory sm:text-[1.08rem]">
-                                            {barber.name}
-                                        </h3>
+                                        className="relative aspect-[4/3] w-full overflow-hidden bg-[rgba(7,7,7,0.95)]"
+                                    >
+                                        <img
+                                            src={barber.photoUrl || FALLBACK_IMAGE}
+                                            alt=""
+                                            aria-hidden="true"
+                                            loading="lazy"
+                                            decoding="async"
+                                            fetchPriority={idx === 0 ? 'low' : 'auto'}
+                                            className="h-full w-full object-cover"
+                                        />
+                                        <div
+                                            className="absolute inset-0"
+                                            aria-hidden="true"
+                                            style={{
+                                                background:
+                                                    'linear-gradient(180deg, rgba(12,9,7,0.1), rgba(12,9,7,0.6))'
+                                            }}
+                                        />
                                     </div>
 
-                                    <p className="mx-auto inline-flex w-fit items-center justify-center rounded-full border border-[#c6934b35] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-goldBright">
-                                        {barber.role || 'Senior Barber'}
-                                    </p>
+                                    <div className="flex h-full flex-col gap-4 p-5 text-center sm:p-6">
+                                        <div className="min-w-0 text-center">
+                                            <h3 className="font-heading text-[1rem] leading-[1.45] tracking-[0.14em] uppercase text-ivory sm:text-[1.08rem]">
+                                                {barber.name}
+                                            </h3>
+                                        </div>
 
-                                    <div className="ornament !mt-0 !w-[72%]" />
+                                        <p className="mx-auto inline-flex w-fit items-center justify-center rounded-full border border-[#c6934b35] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-goldBright">
+                                            {barber.role || 'Senior Barber'}
+                                        </p>
 
-                                    <p className="mx-auto max-w-[30ch] text-sm leading-7 text-smoke">
-                                        {barber.bio || 'Sharp hands, calm energy, and premium attention to detail.'}
-                                    </p>
-                                </div>
-                            </LuxuryCard>
-                        </motion.div>
-                    ))}
+                                        <div className="ornament !mt-0 !w-[72%]" />
+
+                                        <p className="mx-auto max-w-[30ch] text-sm leading-7 text-smoke">
+                                            {barber.bio || 'Sharp hands, calm energy, and premium attention to detail.'}
+                                        </p>
+                                    </div>
+                                </LuxuryCard>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             ) : null}
         </section>

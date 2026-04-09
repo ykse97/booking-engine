@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaInstagram, FaTiktok } from 'react-icons/fa';
-import { Menu, X } from 'lucide-react';
+import { Menu, Moon, Sun, X } from 'lucide-react';
 import SectionLink from './SectionLink';
 import {
     scrollWindowToElement,
@@ -10,6 +10,7 @@ import {
     setSiteHeaderHeight
 } from '../utils/scroll';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
+import { useColorScheme } from '../context/ColorSchemeContext';
 
 const PENDING_SCROLL_KEY = 'pending-section-scroll';
 const SECTION_SCROLL_PENDING_CLASS = 'section-scroll-pending';
@@ -19,6 +20,7 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const headerRef = useRef(null);
     const pendingMobileActionRef = useRef(null);
+    const { colorScheme, isDarkMode, toggleColorScheme } = useColorScheme();
     const location = useLocation();
     const navigate = useNavigate();
     useBodyScrollLock(mobileMenuOpen);
@@ -93,11 +95,6 @@ export default function Navbar() {
                 ts: Date.now()
             })
         );
-
-        if (typeof document !== 'undefined') {
-            document.documentElement.classList.add(SECTION_SCROLL_PENDING_CLASS);
-            setAutoScrollHidden(true);
-        }
     }
 
     function clearPendingSectionScroll() {
@@ -235,11 +232,28 @@ export default function Navbar() {
         );
     }
 
+    function renderColorSchemeToggle(className = 'nav-theme-toggle') {
+        const nextModeLabel = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
+
+        return (
+            <button
+                type="button"
+                className={className}
+                onClick={toggleColorScheme}
+                aria-label={nextModeLabel}
+                aria-pressed={colorScheme === 'light'}
+                title={nextModeLabel}
+            >
+                {isDarkMode ? <Sun size={18} strokeWidth={1.8} /> : <Moon size={18} strokeWidth={1.8} />}
+            </button>
+        );
+    }
+
     return (
         <>
             <header
                 ref={headerRef}
-                className="site-header border-b border-white/10 bg-black/80 backdrop-blur-md"
+                className="site-header"
             >
                 <div className="nav-shell py-3 text-[11px] uppercase text-ivory">
                     <div className="hidden md:grid nav-desktop-grid items-center">
@@ -287,6 +301,8 @@ export default function Navbar() {
                                 >
                                     <FaTiktok size={16} />
                                 </a>
+
+                                {renderColorSchemeToggle()}
                             </div>
                         </div>
                     </div>
@@ -318,15 +334,19 @@ export default function Navbar() {
                             </div>
                         </a>
 
-                        <button
-                            type="button"
-                            className={`nav-burger-btn ${mobileMenuOpen ? 'nav-burger-btn-open' : ''}`}
-                            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-                            aria-expanded={mobileMenuOpen}
-                            onClick={() => setMobileMenuOpen((prev) => !prev)}
-                        >
-                            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button>
+                        <div className="nav-mobile-actions">
+                            {renderColorSchemeToggle('nav-theme-toggle nav-theme-toggle-mobile')}
+
+                            <button
+                                type="button"
+                                className={`nav-burger-btn ${mobileMenuOpen ? 'nav-burger-btn-open' : ''}`}
+                                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                                aria-expanded={mobileMenuOpen}
+                                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                            >
+                                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -361,14 +381,18 @@ export default function Navbar() {
                             </div>
                         </a>
 
-                        <button
-                            type="button"
-                            className="nav-burger-btn nav-burger-btn-open"
-                            aria-label="Close menu"
-                            onClick={closeMenu}
-                        >
-                            <X size={24} />
-                        </button>
+                        <div className="nav-mobile-actions">
+                            {renderColorSchemeToggle('nav-theme-toggle nav-theme-toggle-mobile')}
+
+                            <button
+                                type="button"
+                                className="nav-burger-btn nav-burger-btn-open"
+                                aria-label="Close menu"
+                                onClick={closeMenu}
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mobile-nav-links">

@@ -11,7 +11,7 @@ export default function IntroSection() {
         'Cuts, styling, coloring, and grooming for women, men, and kids - from quick trims to bold color and restorative treatments in one welcoming space.';
 
     return (
-        <section className="services-page-shell py-10" id="intro">
+        <section className="intro-section services-page-shell py-10" id="intro">
             <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -19,7 +19,9 @@ export default function IntroSection() {
                 transition={{ duration: 0.4 }}
                 className="mx-auto max-w-[820px] space-y-4 text-center"
             >
-                <p className="text-sm tracking-[0.26em] text-white uppercase">Premium Barbers for the Modern People</p>
+                <p className="intro-eyebrow text-sm tracking-[0.26em] text-white uppercase">
+                    Your Style, Perfected
+                </p>
                 <p className="text-sm text-smoke leading-relaxed">
                     {description}
                 </p>

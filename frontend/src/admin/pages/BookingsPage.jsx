@@ -171,173 +171,183 @@ export default function BookingsPage({
             </section>
 
             <section id="admin-phone-booking" className="panel admin-workspace-section">
-                <SectionTitle title="Book Appointment" subtitle="Free Admin Booking" />
-                <p className="panel-note">
-                    Use this section for phone bookings. The slot is saved immediately without Stripe and becomes unavailable on the public website.
-                </p>
+                <div className="admin-booking-public-shell booking-page-shell">
+                    <SectionTitle title="Book Appointment" subtitle="Free Admin Booking" />
+                    <p className="panel-note">
+                        Use this section for phone bookings. The slot is saved immediately without Stripe and becomes unavailable on the public website.
+                    </p>
 
-                <div className="admin-booking-grid">
-                    <div className="admin-booking-main">
-                        <LuxuryCard className="admin-booking-selection-card">
-                            <div className="admin-booking-selection-grid">
-                                <label>
-                                    Treatment
-                                    <select value={manualBookingTreatmentId} onChange={(event) => setManualBookingTreatmentId(event.target.value)}>
-                                        <option value="">Select treatment</option>
-                                        {sortedTreatments.map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
+                    <div className="admin-booking-grid">
+                        <div className="admin-booking-main">
+                            <LuxuryCard className="booking-form-panel admin-booking-selection-card">
+                                <div className="admin-booking-selection-grid">
+                                    <label>
+                                        Treatment
+                                        <select
+                                            className="admin-choice-select"
+                                            value={manualBookingTreatmentId}
+                                            onChange={(event) => setManualBookingTreatmentId(event.target.value)}
+                                        >
+                                            <option value="">Select treatment</option>
+                                            {sortedTreatments.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
 
-                                <label>
-                                    Barber
-                                    <select value={manualBookingBarberId} onChange={(event) => setManualBookingBarberId(event.target.value)}>
-                                        <option value="">Select barber</option>
-                                        {sortedBarbers.map((item) => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
+                                    <label>
+                                        Barber
+                                        <select
+                                            className="admin-choice-select"
+                                            value={manualBookingBarberId}
+                                            onChange={(event) => setManualBookingBarberId(event.target.value)}
+                                        >
+                                            <option value="">Select barber</option>
+                                            {sortedBarbers.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </div>
+                            </LuxuryCard>
+
+                            <div className="admin-booking-datetime-grid">
+                                <div className="booking-date-panel admin-booking-calendar-panel">
+                                    <BookingCalendar selectedDate={manualBookingDateObject} onSelect={onManualBookingDateSelect} />
+                                </div>
+
+                                <div className="booking-time-panel admin-booking-time-panel">
+                                    <TimeSlotList
+                                        slots={manualBookingSlots}
+                                        selectedSlot={manualBookingSelectedSlot}
+                                        onSelect={onManualBookingSlotSelect}
+                                        loading={manualBookingSlotsLoading}
+                                        emptyMessage="No free slots for the selected barber, service, and date."
+                                    />
+                                </div>
                             </div>
-                        </LuxuryCard>
 
-                        <div className="admin-booking-datetime-grid">
-                            <div className="booking-date-panel admin-booking-calendar-panel">
-                                <BookingCalendar selectedDate={manualBookingDateObject} onSelect={onManualBookingDateSelect} />
-                            </div>
+                            <LuxuryCard className="booking-form-panel admin-booking-customer-card">
+                                <div className="admin-card-heading">
+                                    <div className="booking-summary-badge">Customer Details</div>
+                                </div>
+                                <div className="admin-card-body">
+                                    <div className="booking-form-grid admin-booking-form-grid">
+                                        <label className="booking-form-field">
+                                            <span>
+                                                <UserRound size={15} />
+                                                Full name
+                                            </span>
+                                            <input
+                                                className="payment-input"
+                                                value={manualBookingForm.customerName}
+                                                onChange={(event) => {
+                                                    setManualBookingForm((current) => ({ ...current, customerName: event.target.value }));
+                                                    clearFieldError('adminBooking', 'customerName');
+                                                }}
+                                                placeholder="Customer full name"
+                                            />
+                                            {fieldErrors.adminBooking?.customerName ? (
+                                                <small>{fieldErrors.adminBooking.customerName}</small>
+                                            ) : null}
+                                        </label>
 
-                            <div className="booking-time-panel admin-booking-time-panel">
-                                <TimeSlotList
-                                    slots={manualBookingSlots}
-                                    selectedSlot={manualBookingSelectedSlot}
-                                    onSelect={onManualBookingSlotSelect}
-                                    loading={manualBookingSlotsLoading}
-                                    emptyMessage="No free slots for the selected barber, service, and date."
-                                />
-                            </div>
+                                        <label className="booking-form-field">
+                                            <span>
+                                                <Phone size={15} />
+                                                Phone number
+                                            </span>
+                                            <input
+                                                className="payment-input"
+                                                value={manualBookingForm.customerPhone}
+                                                onChange={(event) => {
+                                                    setManualBookingForm((current) => ({ ...current, customerPhone: event.target.value }));
+                                                    clearFieldError('adminBooking', 'customerPhone');
+                                                }}
+                                                placeholder="+353 87 000 0000"
+                                            />
+                                            {fieldErrors.adminBooking?.customerPhone ? (
+                                                <small>{fieldErrors.adminBooking.customerPhone}</small>
+                                            ) : null}
+                                        </label>
+                                    </div>
+
+                                    <div className="row admin-card-actions">
+                                        <GoldButton
+                                            type="button"
+                                            onClick={createAdminBooking}
+                                            disabled={
+                                                loading ||
+                                                !manualBookingSelectedSlot ||
+                                                !manualBookingBarberId ||
+                                                !manualBookingTreatmentId ||
+                                                !manualBookingForm.customerName.trim() ||
+                                                !manualBookingForm.customerPhone.trim()
+                                            }
+                                        >
+                                            Update Slot
+                                        </GoldButton>
+                                    </div>
+
+                                    {sectionErrors.adminBooking ? <p className="section-error">{sectionErrors.adminBooking}</p> : null}
+                                    {sectionSuccess.adminBooking ? <p className="section-ok">{sectionSuccess.adminBooking}</p> : null}
+                                </div>
+                            </LuxuryCard>
                         </div>
 
-                        <LuxuryCard className="admin-booking-customer-card">
-                            <div className="admin-card-heading">
-                                <div className="booking-summary-badge">Customer Details</div>
-                            </div>
-                            <div className="admin-card-body">
-                                <div className="booking-form-grid admin-booking-form-grid">
-                                    <label className="booking-form-field">
-                                        <span>
-                                            <UserRound size={15} />
-                                            Full name
+                        <div className="admin-booking-aside">
+                            <LuxuryCard className="booking-summary-card admin-booking-summary-card">
+                                <div className="admin-summary-header">
+                                    <div className="booking-summary-badge">Appointment Summary</div>
+                                    <h2>Phone Booking Preview</h2>
+                                    <p className="booking-summary-description">
+                                        Confirm the slot details before you update the calendar and block the appointment on the public site.
+                                    </p>
+                                </div>
+                                <div className="ornament admin-summary-ornament !mt-0 !w-full" />
+                                <div className="booking-summary-list admin-booking-summary-list">
+                                    <div className="admin-summary-list-item">
+                                        <span className="admin-summary-list-key">
+                                            <Sparkles size={14} />
+                                            <span className="admin-summary-list-label">Service</span>
                                         </span>
-                                        <input
-                                            className="payment-input"
-                                            value={manualBookingForm.customerName}
-                                            onChange={(event) => {
-                                                setManualBookingForm((current) => ({ ...current, customerName: event.target.value }));
-                                                clearFieldError('adminBooking', 'customerName');
-                                            }}
-                                            placeholder="Customer full name"
-                                        />
-                                        {fieldErrors.adminBooking?.customerName ? (
-                                            <small>{fieldErrors.adminBooking.customerName}</small>
-                                        ) : null}
-                                    </label>
-
-                                    <label className="booking-form-field">
-                                        <span>
-                                            <Phone size={15} />
-                                            Phone number
+                                        <strong className="admin-summary-list-value">{selectedTreatment?.name || '--'}</strong>
+                                    </div>
+                                    <div className="admin-summary-list-item">
+                                        <span className="admin-summary-list-key">
+                                            <Scissors size={14} />
+                                            <span className="admin-summary-list-label">Barber</span>
                                         </span>
-                                        <input
-                                            className="payment-input"
-                                            value={manualBookingForm.customerPhone}
-                                            onChange={(event) => {
-                                                setManualBookingForm((current) => ({ ...current, customerPhone: event.target.value }));
-                                                clearFieldError('adminBooking', 'customerPhone');
-                                            }}
-                                            placeholder="+353 87 000 0000"
-                                        />
-                                        {fieldErrors.adminBooking?.customerPhone ? (
-                                            <small>{fieldErrors.adminBooking.customerPhone}</small>
-                                        ) : null}
-                                    </label>
+                                        <strong className="admin-summary-list-value">{selectedBarber?.name || '--'}</strong>
+                                    </div>
+                                    <div className="admin-summary-list-item">
+                                        <span className="admin-summary-list-key">
+                                            <CalendarClock size={14} />
+                                            <span className="admin-summary-list-label">Date</span>
+                                        </span>
+                                        <strong className="admin-summary-list-value">{formatBookingDate(manualBookingDate)}</strong>
+                                    </div>
+                                    <div className="admin-summary-list-item">
+                                        <span className="admin-summary-list-key">
+                                            <Clock3 size={14} />
+                                            <span className="admin-summary-list-label">Time</span>
+                                        </span>
+                                        <strong className="admin-summary-list-value">{formatSlotLabel(manualBookingSelectedSlot)}</strong>
+                                    </div>
+                                    <div className="admin-summary-list-item">
+                                        <span className="admin-summary-list-key">
+                                            <Phone size={14} />
+                                            <span className="admin-summary-list-label">Phone</span>
+                                        </span>
+                                        <strong className="admin-summary-list-value">{manualBookingForm.customerPhone || '--'}</strong>
+                                    </div>
                                 </div>
-
-                                <div className="row admin-card-actions">
-                                    <GoldButton
-                                        type="button"
-                                        onClick={createAdminBooking}
-                                        disabled={
-                                            loading ||
-                                            !manualBookingSelectedSlot ||
-                                            !manualBookingBarberId ||
-                                            !manualBookingTreatmentId ||
-                                            !manualBookingForm.customerName.trim() ||
-                                            !manualBookingForm.customerPhone.trim()
-                                        }
-                                    >
-                                        Update Slot
-                                    </GoldButton>
-                                </div>
-
-                                {sectionErrors.adminBooking ? <p className="section-error">{sectionErrors.adminBooking}</p> : null}
-                                {sectionSuccess.adminBooking ? <p className="section-ok">{sectionSuccess.adminBooking}</p> : null}
-                            </div>
-                        </LuxuryCard>
-                    </div>
-
-                    <div className="admin-booking-aside">
-                        <LuxuryCard className="booking-summary-card admin-booking-summary-card">
-                            <div className="admin-summary-header">
-                                <div className="booking-summary-badge">Appointment Summary</div>
-                                <h2>Phone Booking Preview</h2>
-                                <p className="booking-summary-description">
-                                    Confirm the slot details before you update the calendar and block the appointment on the public site.
-                                </p>
-                            </div>
-                            <div className="ornament admin-summary-ornament !mt-0 !w-full" />
-                            <div className="booking-summary-list admin-booking-summary-list">
-                                <div className="admin-summary-list-item">
-                                    <span className="admin-summary-list-key">
-                                        <Sparkles size={14} />
-                                        <span className="admin-summary-list-label">Service</span>
-                                    </span>
-                                    <strong className="admin-summary-list-value">{selectedTreatment?.name || '--'}</strong>
-                                </div>
-                                <div className="admin-summary-list-item">
-                                    <span className="admin-summary-list-key">
-                                        <Scissors size={14} />
-                                        <span className="admin-summary-list-label">Barber</span>
-                                    </span>
-                                    <strong className="admin-summary-list-value">{selectedBarber?.name || '--'}</strong>
-                                </div>
-                                <div className="admin-summary-list-item">
-                                    <span className="admin-summary-list-key">
-                                        <CalendarClock size={14} />
-                                        <span className="admin-summary-list-label">Date</span>
-                                    </span>
-                                    <strong className="admin-summary-list-value">{formatBookingDate(manualBookingDate)}</strong>
-                                </div>
-                                <div className="admin-summary-list-item">
-                                    <span className="admin-summary-list-key">
-                                        <Clock3 size={14} />
-                                        <span className="admin-summary-list-label">Time</span>
-                                    </span>
-                                    <strong className="admin-summary-list-value">{formatSlotLabel(manualBookingSelectedSlot)}</strong>
-                                </div>
-                                <div className="admin-summary-list-item">
-                                    <span className="admin-summary-list-key">
-                                        <Phone size={14} />
-                                        <span className="admin-summary-list-label">Phone</span>
-                                    </span>
-                                    <strong className="admin-summary-list-value">{manualBookingForm.customerPhone || '--'}</strong>
-                                </div>
-                            </div>
-                        </LuxuryCard>
+                            </LuxuryCard>
+                        </div>
                     </div>
                 </div>
             </section>

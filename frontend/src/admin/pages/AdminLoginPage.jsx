@@ -1,5 +1,6 @@
 import GoldButton from '../../components/ui/GoldButton';
 import SectionTitle from '../../components/ui/SectionTitle';
+import AdminColorSchemeToggle from '../components/AdminColorSchemeToggle';
 
 export default function AdminLoginPage({
     loginForm,
@@ -13,6 +14,10 @@ export default function AdminLoginPage({
 }) {
     return (
         <main className="page admin-login-page">
+            <div className="admin-login-toolbar">
+                <AdminColorSchemeToggle />
+            </div>
+
             <section className="panel panel-narrow admin-login-card">
                 <SectionTitle title="Admin Access" subtitle="Royal Chair Control" />
                 <p className="panel-note admin-login-copy">

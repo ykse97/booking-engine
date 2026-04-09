@@ -259,27 +259,37 @@ export default function BarbersPage({
                 <SectionTitle title="Barber Schedule (per period)" subtitle="Bulk Schedule Updates" />
 
                 <div className="row admin-control-row admin-control-row-schedule">
-                    <select value={periodTargetBarberId} onChange={(event) => setPeriodTargetBarberId(event.target.value)}>
-                        <option value={allBarbersOption}>All barbers</option>
-                        {sortedBarbers.map((item) => (
-                            <option key={item.id} value={item.id}>
-                                {item.name}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="admin-control-field">
+                        <span>Apply To</span>
+                        <select value={periodTargetBarberId} onChange={(event) => setPeriodTargetBarberId(event.target.value)}>
+                            <option value={allBarbersOption}>All barbers</option>
+                            {sortedBarbers.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                    {item.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
 
-                    <input
-                        type="date"
-                        value={periodStartDate}
-                        max={periodEndDate || undefined}
-                        onChange={(event) => setPeriodStartDate(event.target.value)}
-                    />
-                    <input
-                        type="date"
-                        value={periodEndDate}
-                        min={periodStartDate || undefined}
-                        onChange={(event) => setPeriodEndDate(event.target.value)}
-                    />
+                    <label className="admin-control-field">
+                        <span>Start Date</span>
+                        <input
+                            type="date"
+                            value={periodStartDate}
+                            max={periodEndDate || undefined}
+                            onChange={(event) => setPeriodStartDate(event.target.value)}
+                        />
+                    </label>
+
+                    <label className="admin-control-field">
+                        <span>End Date</span>
+                        <input
+                            type="date"
+                            value={periodEndDate}
+                            min={periodStartDate || undefined}
+                            onChange={(event) => setPeriodEndDate(event.target.value)}
+                        />
+                    </label>
                 </div>
 
                 <div className="table-wrapper admin-table-shell">
@@ -343,7 +353,7 @@ export default function BarbersPage({
                     </table>
                 </div>
 
-                <div className="row">
+                <div className="row admin-section-actions">
                     <button type="button" className="btn-gold" onClick={updateBarberPeriod} disabled={loading || sortedBarbers.length === 0}>
                         Update Period
                     </button>
@@ -357,16 +367,22 @@ export default function BarbersPage({
                 <SectionTitle title="Barber Schedule (per date)" subtitle="Single-Day Override" />
 
                 <div className="row admin-control-row admin-control-row-schedule">
-                    <select value={selectedBarberId} onChange={(event) => setSelectedBarberId(event.target.value)}>
-                        <option value="">Select barber</option>
-                        {sortedBarbers.map((item) => (
-                            <option key={item.id} value={item.id}>
-                                {item.name}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="admin-control-field">
+                        <span>Barber</span>
+                        <select value={selectedBarberId} onChange={(event) => setSelectedBarberId(event.target.value)}>
+                            <option value="">Select barber</option>
+                            {sortedBarbers.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                    {item.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
 
-                    <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+                    <label className="admin-control-field">
+                        <span>Working Date</span>
+                        <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+                    </label>
                 </div>
 
                 <div className="grid two barber-day-grid admin-form-grid-shell">
@@ -422,7 +438,7 @@ export default function BarbersPage({
                     </label>
                 </div>
 
-                <div className="row">
+                <div className="row admin-section-actions">
                     <button type="button" className="btn-gold" onClick={updateBarberDay} disabled={loading || !selectedBarberId}>
                         Update Day
                     </button>

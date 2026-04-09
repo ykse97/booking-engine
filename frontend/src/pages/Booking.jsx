@@ -1077,47 +1077,51 @@ export default function Booking() {
                             {catalogLoading ? <LuxuryCard className="text-center text-smoke">Loading services...</LuxuryCard> : null}
                             {!catalogLoading ? (
                                 <div className="booking-card-grid">
-                                    {sortedTreatments.map((treatment, index) => (
-                                        <button
-                                            key={treatment.id}
-                                            type="button"
-                                            className={`booking-choice-card ${selectedTreatmentId === treatment.id ? 'booking-choice-card-active' : ''
-                                                }`}
-                                            onClick={() => {
-                                                setSelectedTreatmentId(treatment.id);
-                                                setBookingResult(null);
-                                            }}
-                                        >
-                                            <div
-                                                className="booking-choice-media"
+                                    {sortedTreatments.map((treatment, index) => {
+                                        const isSelected = selectedTreatmentId === treatment.id;
+
+                                        return (
+                                            <button
+                                                key={treatment.id}
+                                                type="button"
+                                                className={`booking-choice-card ${isSelected ? 'booking-choice-card-active' : ''}`}
+                                                onClick={() => {
+                                                    setSelectedTreatmentId(treatment.id);
+                                                    setBookingResult(null);
+                                                }}
                                             >
-                                                <img
-                                                    src={treatment.photoUrl || FALLBACK_TREATMENT_IMAGE}
-                                                    alt=""
-                                                    aria-hidden="true"
-                                                    loading={index < 2 ? 'eager' : 'lazy'}
-                                                    decoding="async"
-                                                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                                                />
-                                                <div
-                                                    className="booking-choice-media-overlay"
-                                                    aria-hidden="true"
-                                                    style={{
-                                                        background:
-                                                            'linear-gradient(180deg, rgba(12, 9, 7, 0.1), rgba(12, 9, 7, 0.7))'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="booking-choice-body">
-                                                <h3>{treatment.name}</h3>
-                                                <p>{treatment.description}</p>
-                                                <div className="booking-choice-meta">
-                                                    <span>{treatment.durationMinutes} min</span>
-                                                    <span className="text-ivory">{formatCurrency(treatment.price)}</span>
+                                                <div className="booking-choice-media">
+                                                    <img
+                                                        src={treatment.photoUrl || FALLBACK_TREATMENT_IMAGE}
+                                                        alt=""
+                                                        aria-hidden="true"
+                                                        loading={index < 2 ? 'eager' : 'lazy'}
+                                                        decoding="async"
+                                                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                                                    />
+                                                    <div
+                                                        className="booking-choice-media-overlay"
+                                                        aria-hidden="true"
+                                                        style={{
+                                                            background:
+                                                                'linear-gradient(180deg, rgba(12, 9, 7, 0.1), rgba(12, 9, 7, 0.7))'
+                                                        }}
+                                                    />
+                                                    {isSelected ? (
+                                                        <span className="booking-choice-selected-badge">Selected</span>
+                                                    ) : null}
                                                 </div>
-                                            </div>
-                                        </button>
-                                    ))}
+                                                <div className="booking-choice-body">
+                                                    <h3>{treatment.name}</h3>
+                                                    <p>{treatment.description}</p>
+                                                    <div className="booking-choice-meta">
+                                                        <span>{treatment.durationMinutes} min</span>
+                                                        <span className="text-ivory">{formatCurrency(treatment.price)}</span>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             ) : null}
 
@@ -1142,46 +1146,50 @@ export default function Booking() {
                             {catalogLoading ? <LuxuryCard className="text-center text-smoke">Loading barbers...</LuxuryCard> : null}
                             {!catalogLoading ? (
                                 <div className="booking-card-grid booking-card-grid-barbers">
-                                    {sortedBarbers.map((barber, index) => (
-                                        <button
-                                            key={barber.id}
-                                            type="button"
-                                            className={`booking-choice-card ${selectedBarberId === barber.id ? 'booking-choice-card-active' : ''
-                                                }`}
-                                            onClick={() => {
-                                                setSelectedBarberId(barber.id);
-                                                setBookingResult(null);
-                                            }}
-                                        >
-                                            <div
-                                                className="booking-choice-media booking-choice-media-barber"
+                                    {sortedBarbers.map((barber, index) => {
+                                        const isSelected = selectedBarberId === barber.id;
+
+                                        return (
+                                            <button
+                                                key={barber.id}
+                                                type="button"
+                                                className={`booking-choice-card ${isSelected ? 'booking-choice-card-active' : ''}`}
+                                                onClick={() => {
+                                                    setSelectedBarberId(barber.id);
+                                                    setBookingResult(null);
+                                                }}
                                             >
-                                                <img
-                                                    src={barber.photoUrl || FALLBACK_BARBER_IMAGE}
-                                                    alt=""
-                                                    aria-hidden="true"
-                                                    loading={index < 2 ? 'eager' : 'lazy'}
-                                                    decoding="async"
-                                                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                                                />
-                                                <div
-                                                    className="booking-choice-media-overlay"
-                                                    aria-hidden="true"
-                                                    style={{
-                                                        background:
-                                                            'linear-gradient(180deg, rgba(12, 9, 7, 0.15), rgba(12, 9, 7, 0.72))'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="booking-choice-body">
-                                                <h3>{barber.name}</h3>
-                                                <div className="text-[11px] uppercase tracking-[0.18em] text-goldBright">
-                                                    {barber.role || 'Senior Barber'}
+                                                <div className="booking-choice-media booking-choice-media-barber">
+                                                    <img
+                                                        src={barber.photoUrl || FALLBACK_BARBER_IMAGE}
+                                                        alt=""
+                                                        aria-hidden="true"
+                                                        loading={index < 2 ? 'eager' : 'lazy'}
+                                                        decoding="async"
+                                                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                                                    />
+                                                    <div
+                                                        className="booking-choice-media-overlay"
+                                                        aria-hidden="true"
+                                                        style={{
+                                                            background:
+                                                                'linear-gradient(180deg, rgba(12, 9, 7, 0.15), rgba(12, 9, 7, 0.72))'
+                                                        }}
+                                                    />
+                                                    {isSelected ? (
+                                                        <span className="booking-choice-selected-badge">Selected</span>
+                                                    ) : null}
                                                 </div>
-                                                <p>{barber.bio || 'Sharp hands, calm energy, and premium attention to detail.'}</p>
-                                            </div>
-                                        </button>
-                                    ))}
+                                                <div className="booking-choice-body">
+                                                    <h3>{barber.name}</h3>
+                                                    <div className="text-[11px] uppercase tracking-[0.18em] text-goldBright">
+                                                        {barber.role || 'Senior Barber'}
+                                                    </div>
+                                                    <p>{barber.bio || 'Sharp hands, calm energy, and premium attention to detail.'}</p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             ) : null}
 
@@ -1408,14 +1416,10 @@ export default function Booking() {
                         <p id="booking-success-description" className="booking-success-description">
                             {bookingResult.status === 'CONFIRMED'
                                 ? 'Your payment was completed successfully and your appointment is now locked into the calendar. Review the details below and close this window when you are ready.'
-                                : 'Your payment was completed successfully. We are finishing the secure Stripe synchronization now, and your appointment will update automatically without any extra salon approval.'}
+                                : 'Your payment was completed successfully. We are finishing the secure Stripe synchronization now, and your appointment will update automatically to status Confirmed.'}
                         </p>
 
                         <div className="booking-confirmation-grid">
-                            <div>
-                                <span>Reference</span>
-                                <strong>{bookingResult.id || '--'}</strong>
-                            </div>
                             <div>
                                 <span>Service</span>
                                 <strong>{selectedTreatment?.name || '--'}</strong>

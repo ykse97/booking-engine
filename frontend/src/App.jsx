@@ -85,9 +85,6 @@ function ScrollToSectionHandler() {
             return;
         }
 
-        setSectionScrollPending(true);
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
         let cancelled = false;
         let timerId = null;
         let locateAttempts = 0;
@@ -110,6 +107,58 @@ function ScrollToSectionHandler() {
                 }
             });
         };
+
+        if (!parsed.sectionId) {
+            clearPendingScrollRecord();
+            setSectionScrollPending(false);
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+            return undefined;
+        }
+
+        const immediateTarget = parsed.sectionId ? document.getElementById(parsed.sectionId) : null;
+
+        if (immediateTarget) {
+            scrollWindowToElement(immediateTarget, {
+                behavior: 'auto',
+                extraOffset: 16
+            });
+            setSectionScrollPending(false);
+            clearPendingScrollRecord();
+
+            const keepAligned = () => {
+                if (cancelled) {
+                    return;
+                }
+
+                const target = document.getElementById(parsed.sectionId);
+
+                if (target) {
+                    scrollWindowToElement(target, {
+                        behavior: 'auto',
+                        extraOffset: 16
+                    });
+                }
+
+                alignAttempts += 1;
+
+                if (alignAttempts < maxAlignAttempts) {
+                    timerId = window.setTimeout(keepAligned, alignAttempts < 3 ? 140 : 220);
+                }
+            };
+
+            timerId = window.setTimeout(keepAligned, 120);
+
+            return () => {
+                cancelled = true;
+                if (timerId) {
+                    window.clearTimeout(timerId);
+                }
+                setSectionScrollPending(false);
+            };
+        }
+
+        setSectionScrollPending(true);
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
         const tryScroll = () => {
             if (cancelled) {

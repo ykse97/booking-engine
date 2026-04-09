@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { CreditCard, ShieldCheck, X } from 'lucide-react';
 
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import { useColorScheme } from '../../context/ColorSchemeContext';
 import GoldButton from '../ui/GoldButton';
 
 const stripePromiseCache = new Map();
@@ -16,16 +17,97 @@ const STRIPE_INSTANCE_OPTIONS = {
     }
 };
 
-function buildStripeAppearance() {
+function buildStripeAppearance(colorScheme) {
+    const isLight = colorScheme === 'light';
+    const neutralSurface = isLight ? '#ffffff' : '#000000';
+    const neutralText = isLight ? '#111111' : '#ffffff';
+    const neutralTextSecondary = isLight ? '#4f4f4f' : '#d2d2d2';
+    const neutralPlaceholder = isLight ? '#7a7a7a' : '#8e8e8e';
+    const neutralBorder = isLight ? '#e6ddd2' : '#262626';
+    const neutralInsetShadow = isLight
+        ? '0 0 0 1px #e6ddd2, 0 1px 2px rgba(17, 17, 17, 0.04)'
+        : '0 0 0 1px #262626, 0 1px 2px rgba(0, 0, 0, 0.4)';
     return {
-        theme: 'night',
+        theme: 'flat',
         variables: {
-            colorText: '#f3e7d5',
-            colorBackground: '#1a120d',
-            colorPrimary: '#d8af66',
-            colorDanger: '#ffbdca',
+            colorText: neutralText,
+            colorTextSecondary: neutralTextSecondary,
+            colorTextPlaceholder: neutralPlaceholder,
+            colorBackground: neutralSurface,
+            colorPrimary: isLight ? '#111111' : '#ffffff',
+            colorPrimaryText: neutralText,
+            colorDanger: isLight ? '#b34256' : '#ffbdca',
+            colorSuccess: '#3f7c53',
+            accessibleColorOnColorPrimary: isLight ? '#ffffff' : '#000000',
+            accessibleColorOnColorBackground: neutralText,
+            iconColor: neutralText,
+            iconHoverColor: neutralText,
+            iconChevronDownColor: neutralText,
+            iconCardCvcColor: neutralText,
+            tabIconColor: neutralText,
+            tabIconSelectedColor: neutralText,
+            logoColor: isLight ? 'dark' : 'light',
+            tabLogoColor: isLight ? 'dark' : 'light',
+            tabLogoSelectedColor: isLight ? 'dark' : 'light',
+            blockLogoColor: isLight ? 'dark' : 'light',
             borderRadius: '18px',
             fontFamily: '"Cormorant Garamond", serif'
+        },
+        rules: {
+            '.Tab': {
+                backgroundColor: neutralSurface,
+                boxShadow: neutralInsetShadow
+            },
+            '.Tab--selected': {
+                backgroundColor: neutralSurface,
+                boxShadow: `0 0 0 1px ${isLight ? '#111111' : '#ffffff'}`
+            },
+            '.TabLabel': {
+                color: 'var(--colorText)'
+            },
+            '.TabLabel--selected': {
+                color: 'var(--colorPrimaryText)'
+            },
+            '.TabIcon': {
+                color: 'var(--iconColor)'
+            },
+            '.TabIcon--selected': {
+                color: 'var(--iconColor)'
+            },
+            '.Block': {
+                backgroundColor: neutralSurface,
+                boxShadow: neutralInsetShadow,
+                color: 'var(--colorText)'
+            },
+            '.BlockAction': {
+                color: 'var(--colorText)'
+            },
+            '.BlockDivider': {
+                backgroundColor: neutralBorder
+            },
+            '.Input': {
+                backgroundColor: neutralSurface,
+                boxShadow: neutralInsetShadow
+            },
+            '.CodeInput': {
+                backgroundColor: neutralSurface,
+                boxShadow: neutralInsetShadow
+            },
+            '.PickerItem': {
+                backgroundColor: neutralSurface,
+                boxShadow: neutralInsetShadow
+            },
+            '.PickerItem--selected': {
+                backgroundColor: neutralSurface,
+                boxShadow: `0 0 0 1px ${isLight ? '#111111' : '#ffffff'}`
+            },
+            '.AccordionItem': {
+                backgroundColor: neutralSurface,
+                boxShadow: neutralInsetShadow
+            },
+            '.Label': {
+                color: 'var(--colorText)'
+            }
         }
     };
 }
@@ -404,6 +486,7 @@ export default function StripeHoldModal({
     onAuthorize,
     onConfirm
 }) {
+    const { colorScheme } = useColorScheme();
     const [checkoutError, setCheckoutError] = useState('');
     const [confirming, setConfirming] = useState(false);
     const onCloseRef = useRef(onClose);
@@ -435,7 +518,7 @@ export default function StripeHoldModal({
         () => (publishableKey ? getStripePromise(publishableKey) : null),
         [publishableKey]
     );
-    const appearance = useMemo(() => buildStripeAppearance(), []);
+    const appearance = useMemo(() => buildStripeAppearance(colorScheme), [colorScheme]);
     const cardElementsOptions = useMemo(() => {
         if (paymentAmountValue == null || !currency) {
             return null;
@@ -555,7 +638,7 @@ export default function StripeHoldModal({
                         <div className="booking-status-card booking-status-card-error">{checkoutBootstrapError}</div>
                     ) : (
                         <Elements
-                            key={`card-checkout-${currency}-${paymentAmountValue}`}
+                            key={`card-checkout-${currency}-${paymentAmountValue}-${colorScheme}`}
                             stripe={stripePromise}
                             options={cardElementsOptions}
                         >
@@ -571,7 +654,7 @@ export default function StripeHoldModal({
                                 walletAction={
                                     walletElementsOptions ? (
                                         <Elements
-                                            key={`wallet-checkout-${currency}-${paymentAmountValue}`}
+                                            key={`wallet-checkout-${currency}-${paymentAmountValue}-${colorScheme}`}
                                             stripe={stripePromise}
                                             options={walletElementsOptions}
                                         >

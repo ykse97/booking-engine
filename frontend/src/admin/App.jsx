@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { adminApi, authApi, getApiErrorMessage, publicApi, tokenStorage } from './api';
+import {
+    adminApi,
+    authApi,
+    getApiErrorMessage,
+    publicApi,
+    setUnauthorizedHandler,
+    tokenStorage
+} from './api';
 import AdminLayout from './components/AdminLayout';
 import AdminLoginPage from './pages/AdminLoginPage';
 import BarbersPage from './pages/BarbersPage';
@@ -10,6 +17,12 @@ import TreatmentsPage from './pages/TreatmentsPage';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const ALL_BARBERS_OPTION = '__ALL_BARBERS__';
+const DEFAULT_SCHEDULE_TIMES = {
+    openTime: '09:00',
+    closeTime: '17:00',
+    breakStartTime: '13:00',
+    breakEndTime: '14:00'
+};
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -87,13 +100,23 @@ function mapHoursResponse(hours) {
 }
 
 function mapScheduleDay(day, dateFallback) {
+    const workingDay = Boolean(day?.workingDay);
+
     return {
         workingDate: day?.workingDate || dateFallback,
-        workingDay: Boolean(day?.workingDay),
-        openTime: day?.openTime ? String(day.openTime).slice(0, 5) : '',
-        closeTime: day?.closeTime ? String(day.closeTime).slice(0, 5) : '',
-        breakStartTime: day?.breakStartTime ? String(day.breakStartTime).slice(0, 5) : '',
-        breakEndTime: day?.breakEndTime ? String(day.breakEndTime).slice(0, 5) : ''
+        workingDay,
+        openTime: day?.openTime
+            ? String(day.openTime).slice(0, 5)
+            : DEFAULT_SCHEDULE_TIMES.openTime,
+        closeTime: day?.closeTime
+            ? String(day.closeTime).slice(0, 5)
+            : DEFAULT_SCHEDULE_TIMES.closeTime,
+        breakStartTime: day?.breakStartTime
+            ? String(day.breakStartTime).slice(0, 5)
+            : DEFAULT_SCHEDULE_TIMES.breakStartTime,
+        breakEndTime: day?.breakEndTime
+            ? String(day.breakEndTime).slice(0, 5)
+            : DEFAULT_SCHEDULE_TIMES.breakEndTime
     };
 }
 
@@ -101,10 +124,10 @@ function emptyBarberPeriodConfig() {
     return DAYS.map((day) => ({
         dayOfWeek: day,
         workingDay: false,
-        openTime: '',
-        closeTime: '',
-        breakStartTime: '',
-        breakEndTime: ''
+        openTime: DEFAULT_SCHEDULE_TIMES.openTime,
+        closeTime: DEFAULT_SCHEDULE_TIMES.closeTime,
+        breakStartTime: DEFAULT_SCHEDULE_TIMES.breakStartTime,
+        breakEndTime: DEFAULT_SCHEDULE_TIMES.breakEndTime
     }));
 }
 
@@ -132,10 +155,18 @@ function mapPeriodSettings(periodSettings, fallbackDate) {
             return {
                 dayOfWeek: day,
                 workingDay: Boolean(value?.workingDay),
-                openTime: value?.openTime ? String(value.openTime).slice(0, 5) : '',
-                closeTime: value?.closeTime ? String(value.closeTime).slice(0, 5) : '',
-                breakStartTime: value?.breakStartTime ? String(value.breakStartTime).slice(0, 5) : '',
-                breakEndTime: value?.breakEndTime ? String(value.breakEndTime).slice(0, 5) : ''
+                openTime: value?.openTime
+                    ? String(value.openTime).slice(0, 5)
+                    : DEFAULT_SCHEDULE_TIMES.openTime,
+                closeTime: value?.closeTime
+                    ? String(value.closeTime).slice(0, 5)
+                    : DEFAULT_SCHEDULE_TIMES.closeTime,
+                breakStartTime: value?.breakStartTime
+                    ? String(value.breakStartTime).slice(0, 5)
+                    : DEFAULT_SCHEDULE_TIMES.breakStartTime,
+                breakEndTime: value?.breakEndTime
+                    ? String(value.breakEndTime).slice(0, 5)
+                    : DEFAULT_SCHEDULE_TIMES.breakEndTime
             };
         })
     };
@@ -311,6 +342,22 @@ function App() {
         },
         []
     );
+
+    useEffect(() => {
+        return setUnauthorizedHandler(() => {
+            setLoading(false);
+            setToken(null);
+            setFieldErrors({});
+            setSectionSuccess({});
+            setSectionErrors({
+                login: 'Your session expired or is no longer valid. Please sign in again to continue.'
+            });
+            setLoginForm((current) => ({
+                ...current,
+                password: ''
+            }));
+        });
+    }, []);
 
     async function loadPublicData() {
         const [salonData, barbersData, treatmentsData] = await Promise.all([
@@ -515,6 +562,9 @@ function App() {
 
     function handleLogout() {
         tokenStorage.clear();
+        setFieldErrors({});
+        setSectionSuccess({});
+        setSectionErrors({});
         setToken(null);
     }
 
@@ -699,7 +749,16 @@ function App() {
 
     function updateBarberPeriodDay(dayOfWeek, patch) {
         setBarberPeriodDays((prev) =>
-            prev.map((item) => (item.dayOfWeek === dayOfWeek ? { ...item, ...patch } : item))
+            prev.map((item) =>
+                item.dayOfWeek === dayOfWeek
+                    ? {
+                        ...item,
+                        ...DEFAULT_SCHEDULE_TIMES,
+                        ...item,
+                        ...patch
+                    }
+                    : item
+            )
         );
     }
 

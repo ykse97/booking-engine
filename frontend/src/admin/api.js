@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const TOKEN_KEY = 'admin_access_token';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+let unauthorizedHandler = null;
+let unauthorizedEventSent = false;
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
@@ -17,6 +19,26 @@ api.interceptors.request.use((config) => {
     }
     return config;
 });
+
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error?.response?.status;
+        const requestUrl = String(error?.config?.url || '');
+        const isLoginRequest = requestUrl.includes('/api/v1/public/auth/login');
+
+        if (status === 401 && !isLoginRequest) {
+            localStorage.removeItem(TOKEN_KEY);
+
+            if (!unauthorizedEventSent) {
+                unauthorizedEventSent = true;
+                unauthorizedHandler?.(error);
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export const authApi = {
     login: async (payload) => (await api.post('/api/v1/public/auth/login', payload)).data
@@ -83,10 +105,26 @@ export const adminApi = {
 };
 
 export const tokenStorage = {
-    set: (token) => localStorage.setItem(TOKEN_KEY, token),
+    set: (token) => {
+        unauthorizedEventSent = false;
+        localStorage.setItem(TOKEN_KEY, token);
+    },
     get: () => localStorage.getItem(TOKEN_KEY),
-    clear: () => localStorage.removeItem(TOKEN_KEY)
+    clear: () => {
+        unauthorizedEventSent = false;
+        localStorage.removeItem(TOKEN_KEY);
+    }
 };
+
+export function setUnauthorizedHandler(handler) {
+    unauthorizedHandler = typeof handler === 'function' ? handler : null;
+
+    return () => {
+        if (unauthorizedHandler === handler) {
+            unauthorizedHandler = null;
+        }
+    };
+}
 
 export function getApiErrorMessage(error) {
     if (!error) {

@@ -1,8 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { scrollWindowToElement, scrollWindowToTop, setAutoScrollHidden } from '../utils/scroll';
+import { scrollWindowToElement, scrollWindowToTop } from '../utils/scroll';
 
 const PENDING_SCROLL_KEY = 'pending-section-scroll';
-const SECTION_SCROLL_PENDING_CLASS = 'section-scroll-pending';
 
 export default function SectionLink({
     sectionId,
@@ -55,11 +54,6 @@ export default function SectionLink({
                 ts: Date.now()
             })
         );
-
-        if (typeof document !== 'undefined') {
-            document.documentElement.classList.add(SECTION_SCROLL_PENDING_CLASS);
-            setAutoScrollHidden(true);
-        }
 
         onNavigate?.();
         navigate(fallbackPath);

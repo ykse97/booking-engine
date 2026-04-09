@@ -25,10 +25,10 @@ export default function GalleryShowcase({
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [emblaRef, emblaApi] = useEmblaCarousel({
         align: 'center',
-        containScroll: 'keepSnaps',
+        containScroll: false,
         dragFree: false,
         duration: shouldReduceMotion ? 20 : 36,
-        inViewThreshold: 0.2,
+        inViewThreshold: 0,
         loop: true,
         skipSnaps: false,
         slidesToScroll: 1
@@ -54,9 +54,6 @@ export default function GalleryShowcase({
                 const slidesInSnap = engine.slideRegistry[snapIndex];
 
                 slidesInSnap.forEach((slideIndex) => {
-                    if (isScrollEvent && !slidesInView.includes(slideIndex)) {
-                        return;
-                    }
 
                     let diffToTarget = scrollSnap - scrollProgress;
 

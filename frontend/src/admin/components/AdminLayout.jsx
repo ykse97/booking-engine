@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { CalendarDays, LogOut, RefreshCw, Scissors, Sparkles, Store } from 'lucide-react';
+import AdminColorSchemeToggle from './AdminColorSchemeToggle';
 
 const NAV_ITEMS = [
     { to: '/bookings', label: 'Bookings', icon: CalendarDays },
@@ -28,6 +29,7 @@ export default function AdminLayout({
                 </div>
 
                 <div className="admin-header-actions">
+                    <AdminColorSchemeToggle />
                     <button type="button" className="btn-gold admin-toolbar-btn" onClick={onRefresh} disabled={loading}>
                         <RefreshCw size={16} />
                         {loading ? 'Refreshing...' : 'Refresh'}
