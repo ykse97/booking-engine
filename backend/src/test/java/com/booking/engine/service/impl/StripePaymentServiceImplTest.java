@@ -9,11 +9,13 @@ import static org.mockito.Mockito.when;
 import com.booking.engine.dto.BookingCheckoutSessionResponseDto;
 import com.booking.engine.exception.PaymentProcessingException;
 import com.booking.engine.properties.StripeProperties;
+import com.booking.engine.security.SecurityAuditLogger;
 import com.booking.engine.stripe.StripeClient;
 import com.stripe.exception.InvalidRequestException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import java.math.BigDecimal;
+import java.lang.reflect.Method;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,9 @@ class StripePaymentServiceImplTest {
 
     @Mock
     private StripeClient stripeClient;
+
+    @Mock
+    private SecurityAuditLogger securityAuditLogger;
 
     @InjectMocks
     private StripePaymentServiceImpl service;
@@ -100,7 +105,7 @@ class StripePaymentServiceImplTest {
                 "pm",
                 Map.of()))
                 .isInstanceOf(PaymentProcessingException.class)
-                .hasMessageContaining("PaymentIntent status");
+                .hasMessage("Payment could not be completed. Please try again or use a different payment method.");
     }
 
     @Test
@@ -120,7 +125,61 @@ class StripePaymentServiceImplTest {
                 .thenThrow(new InvalidRequestException("boom", "param", "req", "code", 400, null));
 
         assertThatThrownBy(() -> service.getPaymentIntentStatus("pi_fail"))
-                .isInstanceOf(PaymentProcessingException.class)
-                .hasMessageContaining("Failed to retrieve Stripe PaymentIntent status");
+                .isInstanceOfSatisfying(PaymentProcessingException.class, ex -> {
+                    assertThat(ex.getClientMessage()).isEqualTo("Unable to verify payment status right now. Please try again.");
+                    assertThat(ex.getMessage()).contains("Failed to retrieve Stripe PaymentIntent status: boom");
+                    assertThat(ex.getCause()).hasMessageContaining("boom");
+                });
+    }
+
+    @Test
+    void createAndConfirmPaymentWithConfirmationTokenThrowsNeutralMessageAndRetainsCause() throws Exception {
+        when(stripeClient.createPaymentIntent(any(PaymentIntentCreateParams.class)))
+                .thenThrow(new InvalidRequestException("provider boom", "param", "req", "code", 400, null));
+
+        assertThatThrownBy(() -> service.createAndConfirmPaymentWithConfirmationToken(
+                new BigDecimal("10.00"),
+                "john@example.com",
+                "ctoken_123",
+                Map.of("bookingId", "123")))
+                .isInstanceOfSatisfying(PaymentProcessingException.class, ex -> {
+                    assertThat(ex.getClientMessage())
+                            .isEqualTo("Payment could not be completed. Please try again or use a different payment method.");
+                    assertThat(ex.getMessage()).contains("Stripe payment via confirmation token failed: provider boom");
+                    assertThat(ex.getCause()).hasMessageContaining("provider boom");
+                });
+    }
+
+    @Test
+    void createAndConfirmPaymentThrowsNeutralMessageAndRetainsCauseWhenStripeFails() throws Exception {
+        when(stripeClient.createPaymentIntent(any(PaymentIntentCreateParams.class)))
+                .thenThrow(new InvalidRequestException("card declined", "param", "req", "code", 402, null));
+
+        assertThatThrownBy(() -> service.createAndConfirmPayment(
+                new BigDecimal("10.00"),
+                "john@example.com",
+                "pm_card_visa",
+                Map.of("bookingId", "123")))
+                .isInstanceOfSatisfying(PaymentProcessingException.class, ex -> {
+                    assertThat(ex.getClientMessage())
+                            .isEqualTo("Payment could not be completed. Please try again or use a different payment method.");
+                    assertThat(ex.getMessage()).contains("Stripe payment request failed: card declined");
+                    assertThat(ex.getCause()).hasMessageContaining("card declined");
+                });
+    }
+
+    @Test
+    void sanitizeLogDetailsRedactsContactLikeProviderData() throws Exception {
+        Method method = StripePaymentServiceImpl.class.getDeclaredMethod("sanitizeLogDetails", String.class);
+        method.setAccessible(true);
+
+        String sanitized = (String) method.invoke(
+                service,
+                "receipt_email john.doe@example.com rejected, call +353 87 123 4567");
+
+        assertThat(sanitized).contains("[emailMask=j***e@example.com]");
+        assertThat(sanitized).contains("[phoneHash=");
+        assertThat(sanitized).doesNotContain("john.doe@example.com");
+        assertThat(sanitized).doesNotContain("+353 87 123 4567");
     }
 }

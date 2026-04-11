@@ -2,18 +2,18 @@ package com.booking.engine.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.booking.engine.dto.BarberRequestDto;
-import com.booking.engine.dto.BarberResponseDto;
-import com.booking.engine.dto.BarberScheduleRequestDto;
-import com.booking.engine.dto.BarberScheduleResponseDto;
+import com.booking.engine.dto.EmployeeRequestDto;
+import com.booking.engine.dto.EmployeeResponseDto;
+import com.booking.engine.dto.EmployeeScheduleRequestDto;
+import com.booking.engine.dto.EmployeeScheduleResponseDto;
 import com.booking.engine.dto.BookingRequestDto;
 import com.booking.engine.dto.BookingResponseDto;
 import com.booking.engine.dto.HairSalonRequestDto;
 import com.booking.engine.dto.HairSalonResponseDto;
 import com.booking.engine.dto.TreatmentRequestDto;
 import com.booking.engine.dto.TreatmentResponseDto;
-import com.booking.engine.entity.BarberDailyScheduleEntity;
-import com.booking.engine.entity.BarberEntity;
+import com.booking.engine.entity.EmployeeDailyScheduleEntity;
+import com.booking.engine.entity.EmployeeEntity;
 import com.booking.engine.entity.BookingEntity;
 import com.booking.engine.entity.BookingStatus;
 import com.booking.engine.entity.HairSalonEntity;
@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,11 +33,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class MapperImplCoverageTest {
 
-    private final BarberMapper barberMapper = new BarberMapperImpl();
+    // Instantiate generated mappers directly so coverage stays independent of Spring wiring.
+    private final EmployeeMapper employeeMapper = new EmployeeMapperImpl();
     private final TreatmentMapper treatmentMapper = new TreatmentMapperImpl();
     private final BookingMapper bookingMapper = new BookingMapperImpl();
     private final HairSalonHoursMapper hairSalonHoursMapper = new HairSalonHoursMapperImpl();
-    private final BarberScheduleMapper barberScheduleMapper = new BarberScheduleMapperImpl();
+    private final EmployeeScheduleMapper employeeScheduleMapper = new EmployeeScheduleMapperImpl();
 
     private HairSalonMapper hairSalonMapper;
 
@@ -47,29 +49,31 @@ class MapperImplCoverageTest {
     }
 
     @Test
-    void barberMapperCoversNullEntityUpdateAndDtoMappings() {
-        assertThat(barberMapper.toEntity(null)).isNull();
-        assertThat(barberMapper.toDto(null)).isNull();
+    void employeeMapperCoversNullEntityUpdateAndDtoMappings() {
+        assertThat(employeeMapper.toEntity(null)).isNull();
+        assertThat(employeeMapper.toDto(null)).isNull();
 
-        BarberRequestDto request = BarberRequestDto.builder()
+        EmployeeRequestDto request = EmployeeRequestDto.builder()
                 .name("Alex")
-                .role("Master Barber")
+                .role("Master Employee")
                 .bio("Senior stylist")
                 .photoUrl("https://cdn.example.com/alex.jpg")
                 .displayOrder(3)
+                .treatmentIds(List.of(UUID.fromString("11111111-1111-1111-1111-111111111111")))
                 .build();
 
-        BarberEntity entity = barberMapper.toEntity(request);
+        EmployeeEntity entity = employeeMapper.toEntity(request);
 
         assertThat(entity.getId()).isNull();
         assertThat(entity.getActive()).isTrue();
         assertThat(entity.getName()).isEqualTo("Alex");
-        assertThat(entity.getRole()).isEqualTo("Master Barber");
+        assertThat(entity.getRole()).isEqualTo("Master Employee");
         assertThat(entity.getBio()).isEqualTo("Senior stylist");
         assertThat(entity.getPhotoUrl()).isEqualTo("https://cdn.example.com/alex.jpg");
         assertThat(entity.getDisplayOrder()).isEqualTo(3);
+        assertThat(entity.getBookable()).isFalse();
 
-        BarberEntity existing = BarberEntity.builder()
+        EmployeeEntity existing = EmployeeEntity.builder()
                 .name("Old Name")
                 .role("Old Role")
                 .bio("Old Bio")
@@ -78,8 +82,8 @@ class MapperImplCoverageTest {
                 .active(false)
                 .build();
 
-        barberMapper.updateFromDto(BarberRequestDto.builder().name("Updated").build(), existing);
-        barberMapper.updateFromDto(null, existing);
+        employeeMapper.updateFromDto(EmployeeRequestDto.builder().name("Updated").build(), existing);
+        employeeMapper.updateFromDto(null, existing);
 
         assertThat(existing.getName()).isEqualTo("Updated");
         assertThat(existing.getRole()).isEqualTo("Old Role");
@@ -91,16 +95,32 @@ class MapperImplCoverageTest {
         entity.setId(id);
         entity.setCreatedAt(createdAt);
         entity.setUpdatedAt(updatedAt);
+        entity.setBookable(true);
+        entity.setProvidedTreatments(Set.of(
+                TreatmentEntity.builder()
+                        .id(UUID.fromString("11111111-1111-1111-1111-111111111111"))
+                        .name("Cut")
+                        .displayOrder(2)
+                        .build(),
+                TreatmentEntity.builder()
+                        .id(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+                        .name("Color")
+                        .displayOrder(1)
+                        .build()));
 
-        BarberResponseDto response = barberMapper.toDto(entity);
+        EmployeeResponseDto response = employeeMapper.toDto(entity);
 
-        assertThat(response).isEqualTo(BarberResponseDto.builder()
+        assertThat(response).isEqualTo(EmployeeResponseDto.builder()
                 .id(id)
                 .name("Alex")
-                .role("Master Barber")
+                .role("Master Employee")
                 .bio("Senior stylist")
                 .photoUrl("https://cdn.example.com/alex.jpg")
                 .displayOrder(3)
+                .bookable(true)
+                .treatmentIds(List.of(
+                        UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                        UUID.fromString("11111111-1111-1111-1111-111111111111")))
                 .active(true)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
@@ -181,7 +201,7 @@ class MapperImplCoverageTest {
         assertThat(bookingMapper.toDto(null)).isNull();
 
         BookingRequestDto request = BookingRequestDto.builder()
-                .barberId(UUID.randomUUID())
+                .employeeId(UUID.randomUUID())
                 .treatmentId(UUID.randomUUID())
                 .bookingDate(LocalDate.of(2030, 1, 15))
                 .startTime(LocalTime.of(10, 0))
@@ -231,10 +251,10 @@ class MapperImplCoverageTest {
         assertThat(existing.getEndTime()).isEqualTo(LocalTime.of(14, 45));
 
         UUID bookingId = UUID.randomUUID();
-        UUID barberId = UUID.randomUUID();
+        UUID employeeId = UUID.randomUUID();
         UUID treatmentId = UUID.randomUUID();
         entity.setId(bookingId);
-        entity.setBarber(BarberEntity.builder().id(barberId).build());
+        entity.setEmployee(EmployeeEntity.builder().id(employeeId).build());
         entity.setTreatment(TreatmentEntity.builder().id(treatmentId).build());
         entity.setStatus(BookingStatus.CONFIRMED);
         entity.setExpiresAt(LocalDateTime.of(2030, 1, 15, 11, 15));
@@ -249,7 +269,7 @@ class MapperImplCoverageTest {
         BookingResponseDto response = bookingMapper.toDto(entity);
 
         assertThat(response.getId()).isEqualTo(bookingId);
-        assertThat(response.getBarberId()).isEqualTo(barberId);
+        assertThat(response.getEmployeeId()).isEqualTo(employeeId);
         assertThat(response.getTreatmentId()).isEqualTo(treatmentId);
         assertThat(response.getCustomerName()).isEqualTo("John Doe");
         assertThat(response.getCustomerEmail()).isEqualTo("john@example.com");
@@ -263,7 +283,7 @@ class MapperImplCoverageTest {
                 .customerName("No Relations")
                 .build());
 
-        assertThat(withoutRelations.getBarberId()).isNull();
+        assertThat(withoutRelations.getEmployeeId()).isNull();
         assertThat(withoutRelations.getTreatmentId()).isNull();
     }
 
@@ -284,7 +304,7 @@ class MapperImplCoverageTest {
 
         HairSalonRequestDto request = HairSalonRequestDto.builder()
                 .name("Royal Chair")
-                .description("Luxury barber studio")
+                .description("Luxury employee studio")
                 .email("contact@royal.example")
                 .phone("+353123456")
                 .address("1 King Street")
@@ -331,11 +351,11 @@ class MapperImplCoverageTest {
     }
 
     @Test
-    void barberScheduleMapperCoversRequestResponseAndNullHandling() {
-        assertThat(barberScheduleMapper.toEntity(null)).isNull();
-        assertThat(barberScheduleMapper.toDto(null)).isNull();
+    void employeeScheduleMapperCoversRequestResponseAndNullHandling() {
+        assertThat(employeeScheduleMapper.toEntity(null)).isNull();
+        assertThat(employeeScheduleMapper.toDto(null)).isNull();
 
-        BarberScheduleRequestDto request = BarberScheduleRequestDto.builder()
+        EmployeeScheduleRequestDto request = EmployeeScheduleRequestDto.builder()
                 .workingDate(LocalDate.of(2030, 6, 5))
                 .workingDay(true)
                 .openTime(LocalTime.of(10, 0))
@@ -344,9 +364,9 @@ class MapperImplCoverageTest {
                 .breakEndTime(LocalTime.of(13, 30))
                 .build();
 
-        BarberDailyScheduleEntity entity = barberScheduleMapper.toEntity(request);
+        EmployeeDailyScheduleEntity entity = employeeScheduleMapper.toEntity(request);
 
-        assertThat(entity.getBarber()).isNull();
+        assertThat(entity.getEmployee()).isNull();
         assertThat(entity.getWorkingDate()).isEqualTo(LocalDate.of(2030, 6, 5));
         assertThat(entity.isWorkingDay()).isTrue();
         assertThat(entity.getBreakEndTime()).isEqualTo(LocalTime.of(13, 30));
@@ -354,9 +374,9 @@ class MapperImplCoverageTest {
         UUID id = UUID.randomUUID();
         entity.setId(id);
 
-        BarberScheduleResponseDto response = barberScheduleMapper.toDto(entity);
+        EmployeeScheduleResponseDto response = employeeScheduleMapper.toDto(entity);
 
-        assertThat(response).isEqualTo(BarberScheduleResponseDto.builder()
+        assertThat(response).isEqualTo(EmployeeScheduleResponseDto.builder()
                 .id(id)
                 .workingDate(LocalDate.of(2030, 6, 5))
                 .workingDay(true)

@@ -2,14 +2,16 @@ package com.booking.engine.service.impl;
 
 import com.booking.engine.dto.AvailabilitySlotDto;
 import com.booking.engine.dto.BookingRequestDto;
-import com.booking.engine.entity.BarberEntity;
+import com.booking.engine.entity.EmployeeEntity;
 import com.booking.engine.entity.BookingEntity;
 import com.booking.engine.entity.BookingStatus;
+import com.booking.engine.entity.SlotHoldEntity;
 import com.booking.engine.exception.BookingValidationException;
 import com.booking.engine.properties.BookingProperties;
-import com.booking.engine.repository.BarberDailyScheduleRepository;
-import com.booking.engine.repository.BarberRepository;
+import com.booking.engine.repository.EmployeeDailyScheduleRepository;
+import com.booking.engine.repository.EmployeeRepository;
 import com.booking.engine.repository.BookingRepository;
+import com.booking.engine.repository.SlotHoldRepository;
 import com.booking.engine.repository.TreatmentRepository;
 import com.booking.engine.service.AvailabilityService;
 import java.time.LocalDate;
@@ -26,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link AvailabilityService}.
- * Validates booking availability and fixed hourly slot constraints.
+ * Provides availability related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -37,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AvailabilityServiceImpl implements AvailabilityService {
-
     // ---------------------- Constants ----------------------
 
     private static final int SLOT_DURATION_MINUTES = 60;
@@ -50,8 +51,13 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     // ---------------------- Repositories ----------------------
 
     private final BookingRepository bookingRepository;
-    private final BarberRepository barberRepository;
-    private final BarberDailyScheduleRepository barberScheduleRepository;
+
+    private final SlotHoldRepository slotHoldRepository;
+
+    private final EmployeeRepository employeeRepository;
+
+    private final EmployeeDailyScheduleRepository employeeScheduleRepository;
+
     private final TreatmentRepository treatmentRepository;
 
     // ---------------------- Properties ----------------------
@@ -65,20 +71,26 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      */
     @Override
     public void validateBookingRequest(BookingRequestDto request) {
-        log.info("Validating booking request for barberId={}, treatmentId={}, date={}, startTime={}",
-                request.getBarberId(),
+        log.debug(
+                "event=availability_validate_request action=start employeeId={} treatmentId={} bookingDate={} startTime={}",
+                request.getEmployeeId(),
                 request.getTreatmentId(),
                 request.getBookingDate(),
                 request.getStartTime());
 
         validateSlotSelection(
-                request.getBarberId(),
+                request.getEmployeeId(),
                 request.getTreatmentId(),
                 request.getBookingDate(),
                 request.getStartTime(),
                 request.getEndTime());
 
-        log.info("Booking request validated successfully");
+        log.debug(
+                "event=availability_validate_request action=success employeeId={} treatmentId={} bookingDate={} startTime={}",
+                request.getEmployeeId(),
+                request.getTreatmentId(),
+                request.getBookingDate(),
+                request.getStartTime());
     }
 
     /**
@@ -86,28 +98,50 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      */
     @Override
     public void validateSlotSelection(
-            UUID barberId,
+            UUID employeeId,
             UUID treatmentId,
             LocalDate bookingDate,
             LocalTime startTime,
             LocalTime endTime) {
-        BarberEntity barber = findActiveBarber(barberId);
-        ensureActiveTreatment(treatmentId);
-
-        validateSlotNotInPast(bookingDate, startTime);
-        validateWorkingHours(barber.getId(), bookingDate, startTime, endTime);
-        validateNoTimeConflicts(barber.getId(), bookingDate, startTime, endTime);
+        validateSlotSelectionExcludingBooking(
+                employeeId,
+                treatmentId,
+                bookingDate,
+                startTime,
+                endTime,
+                null);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<AvailabilitySlotDto> getAvailability(UUID barberId, LocalDate date, UUID treatmentId) {
-        BarberEntity barber = findActiveBarber(barberId);
+    public void validateSlotSelectionExcludingBooking(
+            UUID employeeId,
+            UUID treatmentId,
+            LocalDate bookingDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            UUID ignoredBookingId) {
+        EmployeeEntity employee = findActiveEmployee(employeeId);
         ensureActiveTreatment(treatmentId);
+        validateEmployeeProvidesTreatment(employee.getId(), treatmentId);
 
-        var workingHoursOpt = barberScheduleRepository.findByBarberIdAndWorkingDate(barber.getId(), date);
+        validateSlotNotInPast(bookingDate, startTime);
+        validateWorkingHours(employee.getId(), bookingDate, startTime, endTime);
+        validateNoTimeConflicts(employee.getId(), bookingDate, startTime, endTime, ignoredBookingId);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<AvailabilitySlotDto> getAvailability(UUID employeeId, LocalDate date, UUID treatmentId) {
+        EmployeeEntity employee = findActiveEmployee(employeeId);
+        ensureActiveTreatment(treatmentId);
+        validateEmployeeProvidesTreatment(employee.getId(), treatmentId);
+
+        var workingHoursOpt = employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employee.getId(), date);
         if (workingHoursOpt.isEmpty() || !workingHoursOpt.get().isWorkingDay()) {
             return List.of();
         }
@@ -119,14 +153,23 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         LocalTime breakEnd = workingHours.getBreakEndTime();
         LocalDateTime now = LocalDateTime.now(getZoneId());
 
-        List<BookingEntity> relevantBookings = getRelevantBookings(barber.getId(), date, now);
+        List<BookingEntity> relevantBookings = getRelevantBookings(employee.getId(), date, now);
+        List<SlotHoldEntity> relevantSlotHolds = getRelevantSlotHolds(employee.getId(), date, now);
         List<AvailabilitySlotDto> slots = new ArrayList<>();
 
         for (LocalTime start = open; !start.plusMinutes(SLOT_DURATION_MINUTES).isAfter(close); start = start
                 .plusMinutes(SLOT_DURATION_MINUTES)) {
 
             LocalTime end = start.plusMinutes(SLOT_DURATION_MINUTES);
-            String slotStatus = resolveSlotStatus(date, start, end, breakStart, breakEnd, relevantBookings, now);
+            String slotStatus = resolveSlotStatus(
+                    date,
+                    start,
+                    end,
+                    breakStart,
+                    breakEnd,
+                    relevantBookings,
+                    relevantSlotHolds,
+                    now);
 
             slots.add(AvailabilitySlotDto.builder()
                     .startTime(start)
@@ -139,20 +182,24 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         return slots;
     }
 
-    // ---------------------- Private Validation Methods ----------------------
+    // ---------------------- Private Methods ----------------------
 
-    /*
-     * Finds barber by ID and validates it exists and is active.
+    /**
+     * Finds an active bookable employee or throws when booking is not allowed.
      */
-    private BarberEntity findActiveBarber(UUID barberId) {
-        BarberEntity barber = barberRepository.findById(barberId)
-                .orElseThrow(() -> new BookingValidationException("Barber not found"));
+    private EmployeeEntity findActiveEmployee(UUID employeeId) {
+        EmployeeEntity employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new BookingValidationException("Employee not found"));
 
-        if (!barber.getActive()) {
-            throw new BookingValidationException("Barber is not active");
+        if (!employee.getActive()) {
+            throw new BookingValidationException("Employee is not active");
         }
 
-        return barber;
+        if (!Boolean.TRUE.equals(employee.getBookable())) {
+            throw new BookingValidationException("Employee is not available for booking");
+        }
+
+        return employee;
     }
 
     /*
@@ -168,6 +215,15 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     /*
+     * Validates that the employee is configured to provide the selected service.
+     */
+    private void validateEmployeeProvidesTreatment(UUID employeeId, UUID treatmentId) {
+        if (!employeeRepository.existsActiveEmployeeTreatment(employeeId, treatmentId)) {
+            throw new BookingValidationException("This employee does not provide the selected service.");
+        }
+    }
+
+    /*
      * Validates that booking slot is not in the past.
      */
     private void validateSlotNotInPast(LocalDate bookingDate, LocalTime startTime) {
@@ -175,17 +231,18 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         LocalDateTime now = LocalDateTime.now(getZoneId());
 
         if (!slotDateTime.isAfter(now)) {
-            log.warn("Attempt to book in the past: {} (current time: {})", slotDateTime, now);
+            log.debug("event=availability_validate_slot outcome=in_past bookingDate={} startTime={}", bookingDate,
+                    startTime);
             throw new BookingValidationException(
                     "Cannot book a slot in the past. Current time: " + now);
         }
     }
 
     /*
-     * Validates booking time against barber working hours for the specific day.
+     * Validates booking time against employee working hours for the specific day.
      */
-    private void validateWorkingHours(UUID barberId, LocalDate bookingDate, LocalTime startTime, LocalTime endTime) {
-        var workingHoursOpt = barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, bookingDate);
+    private void validateWorkingHours(UUID employeeId, LocalDate bookingDate, LocalTime startTime, LocalTime endTime) {
+        var workingHoursOpt = employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, bookingDate);
 
         if (workingHoursOpt.isEmpty()) {
             throw new BookingValidationException(bookingDate + " is not a working day");
@@ -202,16 +259,16 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
         if (startTime.isBefore(openTime)) {
             throw new BookingValidationException(
-                    "Booking starts before barber working time. Barber starts at " + openTime);
+                    "Booking starts before employee working time. Employee starts at " + openTime);
         }
 
         if (endTime.isAfter(closeTime)) {
             throw new BookingValidationException(
-                    "Booking ends after barber working time. Barber ends at " + closeTime);
+                    "Booking ends after employee working time. Employee ends at " + closeTime);
         }
 
         if (overlapsBreak(startTime, endTime, workingHours.getBreakStartTime(), workingHours.getBreakEndTime())) {
-            throw new BookingValidationException("Selected slot overlaps the barber break time.");
+            throw new BookingValidationException("Selected slot overlaps the employee break time.");
         }
     }
 
@@ -219,10 +276,11 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * Validates that time slot has no conflicts with existing bookings or active
      * slot holds.
      */
-    private void validateNoTimeConflicts(UUID barberId, LocalDate date,
-            LocalTime newStart, LocalTime newEnd) {
+    private void validateNoTimeConflicts(UUID employeeId, LocalDate date,
+            LocalTime newStart, LocalTime newEnd, UUID ignoredBookingId) {
         LocalDateTime now = LocalDateTime.now(getZoneId());
-        List<BookingEntity> relevantBookings = getRelevantBookings(barberId, date, now);
+        List<BookingEntity> relevantBookings = getRelevantBookings(employeeId, date, now, ignoredBookingId);
+        List<SlotHoldEntity> relevantSlotHolds = getRelevantSlotHolds(employeeId, date, now);
         BookingEntity conflictingBooking = findConflictingBooking(newStart, newEnd, relevantBookings);
 
         if (conflictingBooking != null) {
@@ -234,23 +292,49 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             throw new BookingValidationException("This slot has already been booked by someone else.");
         }
 
-        log.info("No time conflicts found for barberId={}, date={}", barberId, date);
+        SlotHoldEntity conflictingHold = findConflictingSlotHold(newStart, newEnd, relevantSlotHolds);
+        if (conflictingHold != null) {
+            throw new BookingValidationException(
+                    "This slot has just been held by another guest. Sorry for the inconvenience.");
+        }
+
+        log.debug("event=availability_validate_conflicts action=clear employeeId={} bookingDate={}", employeeId, date);
     }
 
-    // ---------------------- Private Helper Methods ----------------------
-
     /*
-     * Retrieves relevant bookings for barber on a specific date.
+     * Retrieves relevant bookings for employee on a specific date.
      * Expired pending holds are ignored immediately, even before the scheduler
      * updates their persisted status.
      */
-    private List<BookingEntity> getRelevantBookings(UUID barberId, LocalDate date, LocalDateTime now) {
-        return bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+    private List<BookingEntity> getRelevantBookings(UUID employeeId, LocalDate date, LocalDateTime now) {
+        return getRelevantBookings(employeeId, date, now, null);
+    }
+
+    /*
+     * Retrieves active temporary slot holds for employee on a specific date.
+     */
+    private List<SlotHoldEntity> getRelevantSlotHolds(UUID employeeId, LocalDate date, LocalDateTime now) {
+        return slotHoldRepository.findActiveByEmployeeIdAndBookingDate(employeeId, date, now);
+    }
+
+    /*
+     * Retrieves relevant bookings for employee on a specific date.
+     * Expired pending holds are ignored immediately, even before the scheduler
+     * updates their persisted status. When a booking is being edited by the
+     * admin, it can be excluded from conflict checks by id.
+     */
+    private List<BookingEntity> getRelevantBookings(UUID employeeId, LocalDate date, LocalDateTime now,
+            UUID ignoredBookingId) {
+        return bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 date,
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE))
                 .stream()
-                .filter(booking -> booking.getStatus() == BookingStatus.CONFIRMED || isBlockingPendingBooking(booking, now))
+                .filter(booking -> ignoredBookingId == null || !ignoredBookingId.equals(booking.getId()))
+                .filter(booking -> booking.getStatus() == BookingStatus.CONFIRMED
+                        || booking.getStatus() == BookingStatus.DONE
+                        || isBlockingPendingBooking(booking, now)
+                        || isLockedCancelledBooking(booking))
                 .toList();
     }
 
@@ -259,8 +343,11 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * the requested slot boundaries.
      *
      * @param start requested slot start time
+     * 
      * @param end requested slot end time
+     * 
      * @param existingBookings already relevant bookings for the day
+     * 
      * @return conflicting booking or {@code null} when none exists
      */
     private BookingEntity findConflictingBooking(LocalTime start, LocalTime end, List<BookingEntity> existingBookings) {
@@ -271,13 +358,28 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     /*
-     * Checks whether a candidate slot overlaps the configured barber break window.
+     * Scans active slot holds and returns the first overlapping reservation.
+     */
+    private SlotHoldEntity findConflictingSlotHold(LocalTime start, LocalTime end, List<SlotHoldEntity> existingHolds) {
+        return existingHolds.stream()
+                .filter(existing -> start.isBefore(existing.getEndTime()) && end.isAfter(existing.getStartTime()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /*
+     * Checks whether a candidate slot overlaps the configured employee break
+     * window.
      * Missing break boundaries are treated as no break configured for the day.
      *
      * @param start candidate slot start time
+     * 
      * @param end candidate slot end time
+     * 
      * @param breakStart configured break start
+     * 
      * @param breakEnd configured break end
+     * 
      * @return {@code true} when the slot intersects the break
      */
     private boolean overlapsBreak(LocalTime start, LocalTime end, LocalTime breakStart, LocalTime breakEnd) {
@@ -293,12 +395,19 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * the past.
      *
      * @param date target booking date
+     * 
      * @param start slot start time
+     * 
      * @param end slot end time
+     * 
      * @param breakStart optional break start
+     * 
      * @param breakEnd optional break end
+     * 
      * @param existingBookings day bookings and active holds
+     * 
      * @param now current timestamp in booking timezone
+     * 
      * @return slot status constant for the API response
      */
     private String resolveSlotStatus(
@@ -308,6 +417,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             LocalTime breakStart,
             LocalTime breakEnd,
             List<BookingEntity> existingBookings,
+            List<SlotHoldEntity> existingSlotHolds,
             LocalDateTime now) {
         if (overlapsBreak(start, end, breakStart, breakEnd)) {
             return STATUS_BREAK;
@@ -320,6 +430,10 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                     : (isActiveHold(conflictingBooking, now) ? STATUS_HELD : STATUS_BOOKED);
         }
 
+        if (findConflictingSlotHold(start, end, existingSlotHolds) != null) {
+            return hasSlotEnded(date, end, now) ? STATUS_PAST : STATUS_HELD;
+        }
+
         return hasSlotStarted(date, start, now) ? STATUS_PAST : STATUS_AVAILABLE;
     }
 
@@ -328,8 +442,11 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * meaning the slot should no longer be offered as future availability.
      *
      * @param date slot date
+     * 
      * @param start slot start time
+     * 
      * @param now current timestamp
+     * 
      * @return {@code true} when the slot has started
      */
     private boolean hasSlotStarted(LocalDate date, LocalTime start, LocalDateTime now) {
@@ -342,8 +459,11 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * slot can be shown as historical rather than simply blocked.
      *
      * @param date slot date
+     * 
      * @param end slot end time
+     * 
      * @param now current timestamp
+     * 
      * @return {@code true} when the slot has ended
      */
     private boolean hasSlotEnded(LocalDate date, LocalTime end, LocalDateTime now) {
@@ -357,7 +477,9 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * hold window.
      *
      * @param booking pending booking candidate
+     * 
      * @param now current timestamp
+     * 
      * @return {@code true} when the pending booking should block the slot
      */
     private boolean isBlockingPendingBooking(BookingEntity booking, LocalDateTime now) {
@@ -366,10 +488,24 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     /*
+     * Detects admin-cancelled bookings that must continue blocking the slot on
+     * the public site.
+     *
+     * @param booking booking to inspect
+     * 
+     * @return {@code true} when the cancelled booking still reserves the slot
+     */
+    private boolean isLockedCancelledBooking(BookingEntity booking) {
+        return booking.getStatus() == BookingStatus.CANCELLED
+                && Boolean.TRUE.equals(booking.getSlotLocked());
+    }
+
+    /*
      * Detects the special case where a booking still carries {@code PENDING}
      * status but Stripe payment has already been completed successfully.
      *
      * @param booking booking to inspect
+     * 
      * @return {@code true} when payment is already captured
      */
     private boolean isPaidPendingBooking(BookingEntity booking) {
@@ -381,7 +517,9 @@ public class AvailabilityServiceImpl implements AvailabilityService {
      * reserve the slot from other customers.
      *
      * @param booking pending booking hold
+     * 
      * @param now current timestamp
+     * 
      * @return {@code true} when the hold has not expired yet
      */
     private boolean isActiveHold(BookingEntity booking, LocalDateTime now) {

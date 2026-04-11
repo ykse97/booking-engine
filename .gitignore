@@ -12,11 +12,13 @@ frontend/dist/
 frontend/build/
 frontend/.env
 frontend/.env.*
+!frontend/.env.development.example
 !frontend/.env.production.example
 
 backend/target/
 backend/.env
 backend/.env.*
+!backend/.env.local.example
 !backend/.env.production.example
 
 

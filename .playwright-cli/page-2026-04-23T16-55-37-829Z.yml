@@ -1,0 +1,197 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Home" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "Gallery" [active] [ref=e9] [cursor=pointer]:
+          - /url: /
+        - link "Services" [ref=e10] [cursor=pointer]:
+          - /url: /services
+      - link "Royal Chair logo" [ref=e11] [cursor=pointer]:
+        - /url: /
+        - img "Royal Chair logo" [ref=e13]
+      - generic [ref=e14]:
+        - link "Book Now" [ref=e15] [cursor=pointer]:
+          - /url: /booking
+        - link "FAQ" [ref=e16] [cursor=pointer]:
+          - /url: /faq
+        - link "Contact" [ref=e17] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e18]:
+          - link "Instagram" [ref=e19] [cursor=pointer]:
+            - /url: https://www.instagram.com/royalchair.ie
+            - img [ref=e20]
+          - link "TikTok" [ref=e22] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@royalchair.ie
+            - img [ref=e23]
+          - button "Switch to light mode" [ref=e25] [cursor=pointer]:
+            - img
+  - main [ref=e26]:
+    - generic [ref=e27]:
+      - generic [ref=e33]:
+        - paragraph [ref=e34]: Royal Chair Barber & Beauty Salon
+        - paragraph [ref=e35]: Women / Men / Kids
+        - heading "Your Style, Perfected" [level=1] [ref=e36]
+        - paragraph [ref=e37]: Cuts, styling, coloring, and grooming for women, men, and kids - from quick trims to bold color and restorative treatments in one welcoming space.
+        - link "+353831823456" [ref=e39] [cursor=pointer]:
+          - /url: tel:+353831823456
+        - button "Book Appointment" [ref=e41] [cursor=pointer]
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: crafted cuts & shaves
+          - heading "Our Services" [level=2] [ref=e45]
+        - generic [ref=e47]:
+          - generic [ref=e50]:
+            - img [ref=e52]
+            - generic [ref=e54]:
+              - heading "Haircut" [level=3] [ref=e56]
+              - generic [ref=e58]:
+                - generic [ref=e59]:
+                  - generic [ref=e60]: Duration
+                  - generic [ref=e61]: 30 min
+                - generic [ref=e63]:
+                  - generic [ref=e64]: Price
+                  - generic [ref=e65]: €20
+          - generic [ref=e68]:
+            - img [ref=e70]
+            - generic [ref=e72]:
+              - heading "Beard" [level=3] [ref=e74]
+              - generic [ref=e76]:
+                - generic [ref=e77]:
+                  - generic [ref=e78]: Duration
+                  - generic [ref=e79]: 20 min
+                - generic [ref=e81]:
+                  - generic [ref=e82]: Price
+                  - generic [ref=e83]: €10
+          - generic [ref=e86]:
+            - img [ref=e88]
+            - generic [ref=e90]:
+              - heading "Nose Woxing" [level=3] [ref=e92]
+              - generic [ref=e94]:
+                - generic [ref=e95]:
+                  - generic [ref=e96]: Duration
+                  - generic [ref=e97]: 30 min
+                - generic [ref=e99]:
+                  - generic [ref=e100]: Price
+                  - generic [ref=e101]: €10
+        - button "View All Services" [ref=e103] [cursor=pointer]
+      - generic [ref=e177]:
+        - generic [ref=e178]:
+          - paragraph [ref=e179]: master craftsmen
+          - heading "Meet Our Team" [level=2] [ref=e180]
+        - generic [ref=e183]:
+          - generic [ref=e185]:
+            - img [ref=e187]
+            - generic [ref=e189]:
+              - heading "Jacob" [level=3] [ref=e191]
+              - paragraph [ref=e192]: Senior Barber & Owner
+              - paragraph [ref=e194]: Meet Senior Barber & Owner Jacob, the powerhouse behind Royal Chair Barbershop! With over 10 years of experience, Jacob combines artistry and precision to deliver top-tier cuts and styles. His passion for perfection and dedication to the craft ensure that every client leaves looking and feeling their best.
+          - generic [ref=e196]:
+            - img [ref=e198]
+            - generic [ref=e200]:
+              - heading "Mary" [level=3] [ref=e202]
+              - paragraph [ref=e203]: Social Media Manager
+              - paragraph [ref=e205]: Mary curates the digital presence of Royal Chair, shaping how our brand is seen and experienced online. Every piece of content she creates reflects our standards — refined, consistent, and true to our identity. She brings creativity, intuition, and a sharp eye for detail into everything she does, turning everyday moments into meaningful visuals. We’re truly lucky to have her — Mary doesn’t just manage our social media, she elevates the way people connect with Royal Chair.
+          - generic [ref=e207]:
+            - img [ref=e209]
+            - generic [ref=e211]:
+              - heading "Alina" [level=3] [ref=e213]
+              - paragraph [ref=e214]: Hairdresser
+              - paragraph [ref=e216]: Meet Alina, bringing her own signature style and expertise to the Royal Chair Barbershop crew! With 7 years of experience behind the chair, Alina combines technical precision with an artistic touch to deliver cuts that suit your look and lifestyle. From crisp fades to refined classics, he’s all about crafting styles that make you feel confident the moment you step out of the chair.
+          - generic [ref=e218]:
+            - img [ref=e220]
+            - generic [ref=e222]:
+              - heading "David" [level=3] [ref=e224]
+              - paragraph [ref=e225]: Senior Barber
+              - paragraph [ref=e227]: Meet David, the newest addition to the Royal Chair Barbershop team! With over 8 years of experience behind the chair, David brings skill, style, and a fresh perspective to every cut. Whether you're after a modern look or a timeless classic, his precision and dedication to the craft guarantee you'll leave looking your best.
+      - generic [ref=e228]:
+        - generic [ref=e229]:
+          - paragraph [ref=e230]: Craft & Atmosphere
+          - heading "Gallery" [level=2] [ref=e231]
+        - region "Gallery gallery" [ref=e234]:
+          - paragraph [ref=e235]: Showing gallery image 1 of 9
+          - generic "Gallery carousel viewport" [ref=e236]:
+            - generic [ref=e237]:
+              - button "Royal Chair gallery image 1, current gallery image" [ref=e238] [cursor=pointer]:
+                - img "Royal Chair gallery image 1" [ref=e240]
+              - button "Focus Royal Chair gallery image 2" [ref=e241] [cursor=pointer]:
+                - img "Royal Chair gallery image 2" [ref=e243]
+              - button "Focus Royal Chair gallery image 3" [ref=e244] [cursor=pointer]:
+                - img "Royal Chair gallery image 3" [ref=e246]
+              - button "Focus Royal Chair gallery image 4" [ref=e247] [cursor=pointer]:
+                - img "Royal Chair gallery image 4" [ref=e249]
+              - button "Focus Royal Chair gallery image 5" [ref=e250] [cursor=pointer]:
+                - img "Royal Chair gallery image 5" [ref=e252]
+              - button "Focus Royal Chair gallery image 6" [ref=e253] [cursor=pointer]:
+                - img "Royal Chair gallery image 6" [ref=e255]
+              - button "Focus Royal Chair gallery image 7" [ref=e256] [cursor=pointer]:
+                - img "Royal Chair gallery image 7" [ref=e258]
+              - button "Focus Royal Chair gallery image 8" [ref=e259] [cursor=pointer]:
+                - img "Royal Chair gallery image 8" [ref=e261]
+              - button "Focus Royal Chair gallery image 9" [ref=e262] [cursor=pointer]:
+                - img "Royal Chair gallery image 9" [ref=e264]
+          - generic [ref=e265]:
+            - button "Show previous gallery image" [ref=e266] [cursor=pointer]:
+              - img [ref=e267]
+            - button "Show next gallery image" [ref=e269] [cursor=pointer]:
+              - img [ref=e270]
+        - button "Book Appointment" [ref=e273] [cursor=pointer]
+  - contentinfo [ref=e110]:
+    - generic [ref=e111]:
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - generic [ref=e116]:
+              - img "Royal Chair logo" [ref=e118]
+              - generic [ref=e119]:
+                - paragraph [ref=e120]: Visit Royal Chair
+                - heading "Find Us In Google Maps" [level=3] [ref=e121]
+            - paragraph [ref=e123]: Open the full Royal Chair location in Google Maps, check the latest contact details, or launch turn-by-turn directions straight from your device.
+          - generic [ref=e124]:
+            - link "Open in Google Maps" [ref=e125] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Royal%20Chair%2C%20Ennis%2C%20Ireland
+              - img [ref=e126]
+              - generic [ref=e130]: Open in Google Maps
+            - link "Get Directions" [ref=e131] [cursor=pointer]:
+              - /url: https://www.google.com/maps/dir/?api=1&destination=Royal%20Chair%2C%20Ennis%2C%20Ireland&travelmode=driving
+              - img [ref=e132]
+              - generic [ref=e134]: Get Directions
+        - generic [ref=e136]:
+          - generic [ref=e138]:
+            - img [ref=e139]
+            - generic [ref=e141]:
+              - paragraph [ref=e142]: Phone
+              - paragraph [ref=e143]: "+353831823456"
+          - generic [ref=e145]:
+            - img [ref=e146]
+            - generic [ref=e149]:
+              - paragraph [ref=e150]: Location
+              - paragraph [ref=e151]: Harvey's Quay, Clonroad Beg, Ennis, Co. Clare, V95 PD28
+          - generic [ref=e153]:
+            - img [ref=e154]
+            - generic [ref=e157]:
+              - paragraph [ref=e158]: Hours
+              - paragraph [ref=e159]: "Mon: 09:00-17:00 | Tue: 09:00-18:00 | Wed: 09:00-18:00 | Thu: 09:00-18:00 | Fri: 09:00-18:00 | Sat: 10:00-16:00 | Sun: 10:00-17:00"
+      - generic [ref=e160]:
+        - generic [ref=e161]:
+          - link "Royal Chair on Instagram" [ref=e162] [cursor=pointer]:
+            - /url: https://www.instagram.com/royalchair.ie
+            - img [ref=e163]
+          - link "Royal Chair on TikTok" [ref=e165] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@royalchair.ie
+            - img [ref=e166]
+        - generic [ref=e169]:
+          - link "Home" [ref=e170] [cursor=pointer]:
+            - /url: /
+          - link "Services" [ref=e171] [cursor=pointer]:
+            - /url: /services
+          - link "Booking" [ref=e172] [cursor=pointer]:
+            - /url: /booking
+          - link "Barbers" [ref=e173] [cursor=pointer]:
+            - /url: /
+          - link "FAQ" [ref=e174] [cursor=pointer]:
+            - /url: /faq
+        - generic [ref=e176]:
+          - text: Copyright 2026 Royal Chair Barber and Beauty Salon. All rights reserved.
+          - text: Website design & development by Yehor Kachur.

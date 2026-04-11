@@ -53,7 +53,7 @@ export default function TimeSlotList({
                                     } ${slot.status === 'HELD' ? 'time-slot-held' : ''
                                     } ${isSelected ? 'time-slot-selected' : ''
                                     }`}
-                                disabled={!slot.available}
+                                disabled={!slot.available || loading}
                                 onClick={() => onSelect(slot)}
                                 aria-pressed={isSelected}
                             >

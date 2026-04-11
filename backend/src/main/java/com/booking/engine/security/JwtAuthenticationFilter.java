@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AdminUserDetailsService userDetailsService;
+    private final AdminAuthCookieService adminAuthCookieService;
 
     @Override
     protected void doFilterInternal(
@@ -35,18 +36,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = resolveToken(request);
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
         try {
             String username = jwtService.extractUsername(token);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                if (jwtService.isTokenValid(token, userDetails)) {
+                int tokenVersion = userDetailsService.loadTokenVersionByUsername(username);
+                if (userDetails.isAccountNonLocked() && jwtService.isTokenValid(token, userDetails, tokenVersion)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -56,11 +57,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception ex) {
-            log.warn("JWT authentication failed: {}", ex.getMessage());
+            log.warn("JWT authentication failed reason={}", ex.getClass().getSimpleName());
             SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
-}
 
+    private String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        return adminAuthCookieService.resolveTokenFromCookie(request);
+    }
+}

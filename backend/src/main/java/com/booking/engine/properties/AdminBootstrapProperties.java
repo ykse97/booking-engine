@@ -14,6 +14,7 @@ import lombok.Data;
 public class AdminBootstrapProperties {
 
     private boolean enabled;
+    private boolean allowPasswordOverwrite;
     private String username;
     private String password;
 }

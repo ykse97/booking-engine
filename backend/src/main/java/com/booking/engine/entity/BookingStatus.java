@@ -8,7 +8,7 @@ package com.booking.engine.entity;
  * @since February 2026
  */
 public enum BookingStatus {
-    /** Booking exists as an unpaid hold or is still synchronizing after Stripe payment. */
+    /** Booking exists as an unpaid hold or, in rare fallback cases, while Stripe success is still reconciling. */
     PENDING,
 
     /** Booking payment is finalized and the appointment is locked into the calendar. */

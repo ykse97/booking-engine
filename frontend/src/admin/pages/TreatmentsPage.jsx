@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import SectionTitle from '../../components/ui/SectionTitle';
 
 function scrollToAdminSection(sectionId) {
@@ -14,8 +15,6 @@ function scrollToAdminSection(sectionId) {
 export default function TreatmentsPage({
     treatmentForm,
     setTreatmentForm,
-    treatmentReorderForm,
-    setTreatmentReorderForm,
     sortedTreatments,
     loading,
     clearFieldError,
@@ -24,10 +23,22 @@ export default function TreatmentsPage({
     sectionSuccess,
     createTreatment,
     updateTreatment,
+    clearTreatmentForm,
     fillTreatmentForm,
     deleteTreatment,
-    reorderTreatments
+    swapTreatments
 }) {
+    const [draggedTreatmentId, setDraggedTreatmentId] = useState('');
+
+    async function handleTreatmentSwap(firstTreatmentId, secondTreatmentId) {
+        if (!firstTreatmentId || !secondTreatmentId || firstTreatmentId === secondTreatmentId) {
+            return;
+        }
+
+        setDraggedTreatmentId('');
+        await swapTreatments(firstTreatmentId, secondTreatmentId);
+    }
+
     const treatmentSections = [
         { id: 'admin-treatments-list', label: 'Treatments List' },
         { id: 'admin-treatments-reorder', label: 'Reorder' }
@@ -59,14 +70,16 @@ export default function TreatmentsPage({
                 <SectionTitle title="Service Catalog" subtitle="Treatments" />
 
                 <form className="grid two" onSubmit={(event) => event.preventDefault()}>
-                    <label>
-                        ID (for update)
-                        <input
-                            className="payment-input"
-                            value={treatmentForm.id}
-                            onChange={(event) => setTreatmentForm((current) => ({ ...current, id: event.target.value }))}
-                        />
-                    </label>
+                    {treatmentForm.id ? (
+                        <label className="full">
+                            Treatment ID
+                            <input
+                                className="payment-input admin-readonly-input"
+                                value={treatmentForm.id}
+                                readOnly
+                            />
+                        </label>
+                    ) : null}
 
                     <label>
                         Name
@@ -121,16 +134,6 @@ export default function TreatmentsPage({
                         />
                     </label>
 
-                    <label>
-                        Display Order
-                        <input
-                            className="payment-input"
-                            type="number"
-                            value={treatmentForm.displayOrder}
-                            onChange={(event) => setTreatmentForm((current) => ({ ...current, displayOrder: event.target.value }))}
-                        />
-                    </label>
-
                     <label className="full">
                         Description
                         <textarea
@@ -149,26 +152,26 @@ export default function TreatmentsPage({
                 </form>
 
                 <div className="row admin-form-actions">
-                    <button type="button" className="btn-gold" onClick={createTreatment} disabled={loading}>
+                    <button
+                        type="button"
+                        className="btn-gold"
+                        onClick={createTreatment}
+                        disabled={loading || Boolean(treatmentForm.id)}
+                    >
                         Create
                     </button>
-                    <button type="button" className="btn-gold" onClick={updateTreatment} disabled={loading}>
+                    <button
+                        type="button"
+                        className="btn-gold"
+                        onClick={updateTreatment}
+                        disabled={loading || !treatmentForm.id}
+                    >
                         Update
                     </button>
                     <button
                         type="button"
                         className="btn-gold"
-                        onClick={() =>
-                            setTreatmentForm({
-                                id: '',
-                                name: '',
-                                durationMinutes: '',
-                                price: '',
-                                displayOrder: '',
-                                photoUrl: '',
-                                description: ''
-                            })
-                        }
+                        onClick={clearTreatmentForm}
                         disabled={loading}
                     >
                         Clear
@@ -232,36 +235,52 @@ export default function TreatmentsPage({
             </section>
 
             <section id="admin-treatments-reorder" className="panel admin-workspace-section">
-                <SectionTitle title="Reorder Treatments" subtitle="Display Sequence" />
+                <SectionTitle title="Reorder Treatments" subtitle="Drag, Drop, Or Tap" />
+                <p className="panel-note">
+                    On desktop, drag one treatment card onto another to swap positions. On mobile, use the Up and Down buttons.
+                </p>
 
-                <div className="row">
-                    <select
-                        value={treatmentReorderForm.id1}
-                        onChange={(event) => setTreatmentReorderForm((current) => ({ ...current, id1: event.target.value }))}
-                    >
-                        <option value="">Select first treatment</option>
-                        {sortedTreatments.map((item) => (
-                            <option key={item.id} value={item.id}>
-                                {item.name} ({item.displayOrder})
-                            </option>
-                        ))}
-                    </select>
+                <div className="admin-reorder-stack">
+                    {sortedTreatments.map((item, index) => (
+                        <div
+                            key={item.id}
+                            className={`admin-reorder-card ${draggedTreatmentId === item.id ? 'admin-reorder-card-dragging' : ''}`}
+                            draggable={!loading}
+                            onDragStart={() => setDraggedTreatmentId(item.id)}
+                            onDragEnd={() => setDraggedTreatmentId('')}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={() => handleTreatmentSwap(draggedTreatmentId, item.id)}
+                        >
+                            <div className="admin-reorder-card-main">
+                                <div className="admin-reorder-badge">#{item.displayOrder}</div>
+                                <div className="admin-reorder-copy">
+                                    <strong>{item.name}</strong>
+                                    <span>
+                                        {item.durationMinutes} min · {item.price} EUR
+                                    </span>
+                                </div>
+                            </div>
 
-                    <select
-                        value={treatmentReorderForm.id2}
-                        onChange={(event) => setTreatmentReorderForm((current) => ({ ...current, id2: event.target.value }))}
-                    >
-                        <option value="">Select second treatment</option>
-                        {sortedTreatments.map((item) => (
-                            <option key={item.id} value={item.id}>
-                                {item.name} ({item.displayOrder})
-                            </option>
-                        ))}
-                    </select>
-
-                    <button type="button" className="btn-gold" onClick={reorderTreatments} disabled={loading}>
-                        Reorder
-                    </button>
+                            <div className="admin-reorder-actions">
+                                <button
+                                    type="button"
+                                    className="btn-gold admin-inline-btn"
+                                    onClick={() => handleTreatmentSwap(item.id, sortedTreatments[index - 1]?.id)}
+                                    disabled={loading || index === 0}
+                                >
+                                    Up
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-gold admin-inline-btn"
+                                    onClick={() => handleTreatmentSwap(item.id, sortedTreatments[index + 1]?.id)}
+                                    disabled={loading || index === sortedTreatments.length - 1}
+                                >
+                                    Down
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 {sectionErrors.treatmentReorder ? <p className="section-error">{sectionErrors.treatmentReorder}</p> : null}

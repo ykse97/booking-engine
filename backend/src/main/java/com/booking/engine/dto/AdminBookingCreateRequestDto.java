@@ -4,6 +4,8 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.Length;
+import jakarta.validation.constraints.Email;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -21,8 +23,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AdminBookingCreateRequestDto {
 
-    @NotNull(message = "Barber ID is required")
-    private UUID barberId;
+    @NotNull(message = "Employee ID is required")
+    private UUID employeeId;
 
     @NotNull(message = "Treatment ID is required")
     private UUID treatmentId;
@@ -37,6 +39,8 @@ public class AdminBookingCreateRequestDto {
     @NotNull(message = "End time is required")
     private LocalTime endTime;
 
+    private UUID holdBookingId;
+
     @NotBlank(message = "Customer name is required")
     @Size(max = 255, message = "Customer name cannot exceed 255 characters")
     private String customerName;
@@ -44,4 +48,8 @@ public class AdminBookingCreateRequestDto {
     @NotBlank(message = "Customer phone is required")
     @Size(max = 50, message = "Customer phone cannot exceed 50 characters")
     private String customerPhone;
+
+    @Email(message = "Customer email must be a valid email address")
+    @Length(max = 255, message = "Customer email cannot exceed 255 characters")
+    private String customerEmail;
 }

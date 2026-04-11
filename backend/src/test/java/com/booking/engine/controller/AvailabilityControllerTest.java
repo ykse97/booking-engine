@@ -27,7 +27,7 @@ class AvailabilityControllerTest {
 
     @Test
     void getAvailabilityDelegatesToService() {
-        UUID barberId = UUID.randomUUID();
+        UUID employeeId = UUID.randomUUID();
         UUID treatmentId = UUID.randomUUID();
         LocalDate date = LocalDate.of(2030, 1, 15);
         List<AvailabilitySlotDto> slots = List.of(
@@ -38,11 +38,11 @@ class AvailabilityControllerTest {
                         .status("AVAILABLE")
                         .build());
 
-        when(availabilityService.getAvailability(barberId, date, treatmentId)).thenReturn(slots);
+        when(availabilityService.getAvailability(employeeId, date, treatmentId)).thenReturn(slots);
 
-        List<AvailabilitySlotDto> response = controller.getAvailability(barberId, date, treatmentId);
+        List<AvailabilitySlotDto> response = controller.getAvailability(employeeId, date, treatmentId);
 
         assertThat(response).isEqualTo(slots);
-        verify(availabilityService).getAvailability(barberId, date, treatmentId);
+        verify(availabilityService).getAvailability(employeeId, date, treatmentId);
     }
 }

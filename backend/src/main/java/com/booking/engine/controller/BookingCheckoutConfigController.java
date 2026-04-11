@@ -22,7 +22,7 @@ public class BookingCheckoutConfigController {
 
     @GetMapping
     public BookingCheckoutConfigResponseDto getCheckoutConfig() {
-        log.info("HTTP GET /api/v1/public/booking-checkout-config");
+        log.info("event=http_request method=GET path=/api/v1/public/booking-checkout-config");
         return BookingCheckoutConfigResponseDto.builder()
                 .currency(stripeProperties.getCurrency())
                 .stripePublishableKey(stripeProperties.getPublishableKey())

@@ -1,12 +1,14 @@
-import React from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { ColorSchemeProvider } from '../context/ColorSchemeContext';
+import GlobalErrorBoundary from '../components/GlobalErrorBoundary';
 import './index.css';
 import '../styles/booking-shared.css';
 import '../styles/booking.css';
 import './styles.css';
+import { primeThemeLogoAssets } from '../utils/themeAssets';
 
 function resetPublicShellSideEffects() {
     const root = document.documentElement;
@@ -32,6 +34,7 @@ function resetPublicShellSideEffects() {
 }
 
 resetPublicShellSideEffects();
+primeThemeLogoAssets();
 
 const shellLockObserver = new MutationObserver(() => {
     resetPublicShellSideEffects();
@@ -59,11 +62,13 @@ const rootElement = document.getElementById('root');
 const root = createRoot(rootElement);
 
 root.render(
-    <React.StrictMode>
-        <ColorSchemeProvider>
-            <HashRouter>
-                <App />
-            </HashRouter>
-        </ColorSchemeProvider>
-    </React.StrictMode>
+    <StrictMode>
+        <GlobalErrorBoundary>
+            <ColorSchemeProvider>
+                <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <App />
+                </HashRouter>
+            </ColorSchemeProvider>
+        </GlobalErrorBoundary>
+    </StrictMode>
 );

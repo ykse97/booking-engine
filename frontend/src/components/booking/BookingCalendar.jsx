@@ -4,16 +4,45 @@ import LuxuryCard from '../ui/LuxuryCard';
 
 const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isSameDay(left, right) {
+    return left.getFullYear() === right.getFullYear()
+        && left.getMonth() === right.getMonth()
+        && left.getDate() === right.getDate();
+}
+
+function toDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function buildMonth(year, month) {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const days = [];
-    for (let i = 0; i < firstDay; i++) {
+
+    for (let index = 0; index < firstDay; index += 1) {
         days.push(null);
     }
-    for (let d = 1; d <= daysInMonth; d++) {
-        days.push(d);
+
+    for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber += 1) {
+        days.push({
+            date: new Date(year, month, dayNumber),
+            dayNumber
+        });
     }
+
+    const trailingDays = (7 - (days.length % 7)) % 7;
+
+    for (let index = 0; index < trailingDays; index += 1) {
+        days.push(null);
+    }
+
     return days;
 }
 
@@ -35,40 +64,58 @@ export default function BookingCalendar({ selectedDate, onSelect }) {
     };
 
     return (
-        <LuxuryCard className="p-4">
-            <div className="flex items-center justify-between mb-3 text-smoke">
-                <button onClick={() => changeMonth(-1)} aria-label="Previous month">
+        <LuxuryCard className="booking-calendar-shell p-4">
+            <div className="calendar-header">
+                <button
+                    type="button"
+                    className="calendar-nav-button"
+                    onClick={() => changeMonth(-1)}
+                    aria-label="Previous month"
+                >
                     <ChevronLeft size={18} />
                 </button>
-                <div className="font-heading tracking-[0.16em] text-ivory text-sm">{title}</div>
-                <button onClick={() => changeMonth(1)} aria-label="Next month">
+                <div className="calendar-title">{title}</div>
+                <button
+                    type="button"
+                    className="calendar-nav-button"
+                    onClick={() => changeMonth(1)}
+                    aria-label="Next month"
+                >
                     <ChevronRight size={18} />
                 </button>
             </div>
 
-            <div className="grid grid-cols-7 text-[11px] text-smoke tracking-[0.14em] mb-3 text-center">
+            <div className="calendar-weekdays">
                 {weekday.map((day) => (
-                    <div key={day}>{day}</div>
+                    <div key={day} className="calendar-weekday">
+                        {day}
+                    </div>
                 ))}
             </div>
 
             <div className="calendar-grid">
-                {monthDays.map((day, idx) => {
-                    if (!day) return <div key={idx} />;
-                    const cellDate = new Date(year, month, day);
-                    const isActive =
-                        day === selectedDate.getDate() &&
-                        month === selectedDate.getMonth() &&
-                        year === selectedDate.getFullYear();
-                    const isPast = cellDate < new Date(new Date().setHours(0, 0, 0, 0));
+                {monthDays.map((cell, index) => {
+                    if (!cell) {
+                        return <div key={`calendar-placeholder-${year}-${month}-${index}`} className="calendar-day-placeholder" aria-hidden="true" />;
+                    }
+
+                    const isActive = isSameDay(cell.date, selectedDate);
+                    const isPast = startOfDay(cell.date) < startOfDay(new Date());
                     return (
                         <button
-                            key={idx}
+                            key={toDateKey(cell.date)}
+                            type="button"
+                            aria-label={cell.date.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric'
+                            })}
                             className={`calendar-day ${isActive ? 'active' : ''} ${isPast ? 'muted' : ''}`}
                             disabled={isPast}
-                            onClick={() => onSelect(cellDate)}
+                            onClick={() => onSelect(new Date(cell.date))}
                         >
-                            {day}
+                            {cell.dayNumber}
                         </button>
                     );
                 })}

@@ -7,33 +7,11 @@ import {
     useMemo,
     useState
 } from 'react';
+import { applyColorSchemeToDocument, resolveStoredColorScheme } from '../utils/themeAssets';
 
 const COLOR_SCHEME_STORAGE_KEY = 'royal-chair-color-scheme';
-const DEFAULT_COLOR_SCHEME = 'dark';
 
 const ColorSchemeContext = createContext(null);
-
-function resolveStoredColorScheme() {
-    if (typeof window === 'undefined') {
-        return DEFAULT_COLOR_SCHEME;
-    }
-
-    const storedColorScheme = window.localStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
-
-    return storedColorScheme === 'light' || storedColorScheme === 'dark'
-        ? storedColorScheme
-        : DEFAULT_COLOR_SCHEME;
-}
-
-function applyColorSchemeToDocument(colorScheme) {
-    if (typeof document === 'undefined') {
-        return;
-    }
-
-    document.documentElement.dataset.theme = colorScheme;
-    document.documentElement.style.colorScheme = colorScheme;
-    document.body?.setAttribute('data-theme', colorScheme);
-}
 
 if (typeof document !== 'undefined') {
     applyColorSchemeToDocument(resolveStoredColorScheme());

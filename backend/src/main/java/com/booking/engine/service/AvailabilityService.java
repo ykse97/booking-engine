@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Service contract for booking availability checks and slot validation rules.
+ * Service contract for availability operations.
+ * Defines availability related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -18,7 +19,7 @@ public interface AvailabilityService {
 
     /**
      * Validates all booking constraints including:
-     * - Barber and treatment existence and active status
+     * - Employee and treatment existence and active status
      * - Booking date/time not in the past
      * - Working hours compliance
      * - Slot availability (no conflicts)
@@ -33,27 +34,47 @@ public interface AvailabilityService {
      * Validates a selected booking slot without requiring customer or payment
      * details. Used by the temporary hold flow before payment is collected.
      *
-     * @param barberId barber identifier
+     * @param employeeId employee identifier
      * @param treatmentId treatment identifier
      * @param bookingDate selected booking date
      * @param startTime selected slot start time
      * @param endTime selected slot end time
      */
     void validateSlotSelection(
-            UUID barberId,
+            UUID employeeId,
             UUID treatmentId,
             LocalDate bookingDate,
             LocalTime startTime,
             LocalTime endTime);
 
     /**
-     * Calculates fixed one-hour availability slots for a barber on a specific
+     * Validates a selected booking slot while ignoring the provided booking
+     * identifier. Used by admin edit flows so an existing appointment can keep
+     * its own slot without being treated as a self-conflict.
+     *
+     * @param employeeId employee identifier
+     * @param treatmentId treatment identifier
+     * @param bookingDate selected booking date
+     * @param startTime selected slot start time
+     * @param endTime selected slot end time
+     * @param ignoredBookingId booking identifier to exclude from conflict checks
+     */
+    void validateSlotSelectionExcludingBooking(
+            UUID employeeId,
+            UUID treatmentId,
+            LocalDate bookingDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            UUID ignoredBookingId);
+
+    /**
+     * Calculates fixed one-hour availability slots for a employee on a specific
      * date.
      *
-     * @param barberId    barber identifier
+     * @param employeeId    employee identifier
      * @param date        target date
      * @param treatmentId treatment identifier
      * @return list of slots with availability flags
      */
-    List<AvailabilitySlotDto> getAvailability(UUID barberId, LocalDate date, UUID treatmentId);
+    List<AvailabilitySlotDto> getAvailability(UUID employeeId, LocalDate date, UUID treatmentId);
 }

@@ -10,13 +10,6 @@
         line-height: 1.6;
     }
 
-    /* Headings */
-    .lux-heading {
-        font-size: clamp(1.2rem, 5vw, 1.45rem);
-        line-height: 1.35;
-        letter-spacing: 0.1em;
-    }
-
     .lux-section-title {
         font-size: clamp(1.7rem, 7vw, 2.15rem);
         line-height: 1.18;
@@ -93,11 +86,6 @@
     /* Avoid ultra-tight layouts */
     .glass-card {
         padding: 18px;
-    }
-
-    .lux-container {
-        padding-left: 18px;
-        padding-right: 18px;
     }
 }
 

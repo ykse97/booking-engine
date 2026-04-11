@@ -29,8 +29,8 @@ import java.math.BigDecimal;
 public class BookingEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "barber_id", nullable = false)
-    private BarberEntity barber;
+    @JoinColumn(name = "employee_id", nullable = false)
+    private EmployeeEntity employee;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "treatment_id", nullable = false)
@@ -81,4 +81,7 @@ public class BookingEntity extends BaseEntity {
 
     @Column(name = "payment_released_at")
     private LocalDateTime paymentReleasedAt;
+
+    @Column(name = "slot_locked", nullable = false)
+    private Boolean slotLocked;
 }

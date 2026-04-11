@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.3</version>
+        <version>4.0.5</version>
         <relativePath />
     </parent>
     <groupId>com.booking</groupId>
@@ -31,6 +31,9 @@
         <java.version>21</java.version>
         <mapstruct.version>1.6.0.Beta1</mapstruct.version>
         <lombok.version>1.18.32</lombok.version>
+        <tomcat.version>11.0.21</tomcat.version>
+        <dependency-check.version>12.2.0</dependency-check.version>
+        <dependency-check.fail-on-error>false</dependency-check.fail-on-error>
         <coverage.service.minimum>0.40</coverage.service.minimum>
         <coverage.controller.minimum>0.40</coverage.controller.minimum>
     </properties>
@@ -155,6 +158,24 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${dependency-check.version}</version>
+                <configuration>
+                    <failBuildOnCVSS>7.0</failBuildOnCVSS>
+                    <failOnError>${dependency-check.fail-on-error}</failOnError>
+                    <formats>
+                        <format>HTML</format>
+                        <format>JSON</format>
+                        <format>SARIF</format>
+                    </formats>
+                    <prettyPrint>true</prettyPrint>
+                    <outputDirectory>${project.build.directory}/dependency-check</outputDirectory>
+                    <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+                    <nvdValidForHours>24</nvdValidForHours>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
@@ -250,5 +271,31 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>security-scan</id>
+            <properties>
+                <dependency-check.fail-on-error>true</dependency-check.fail-on-error>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dependency-check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

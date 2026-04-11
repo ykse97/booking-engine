@@ -4,9 +4,11 @@ import com.booking.engine.dto.BookingBlacklistEntryRequestDto;
 import com.booking.engine.dto.BookingBlacklistEntryResponseDto;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
- * Service contract for booking blacklist validation and entry management.
+ * Service contract for booking blacklist operations.
+ * Defines booking blacklist related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -36,6 +38,7 @@ public interface BookingBlacklistService {
      *
      * @return active blacklist entry DTOs
      */
+    @PreAuthorize("hasRole('ADMIN')")
     List<BookingBlacklistEntryResponseDto> getActiveEntries();
 
     /**
@@ -44,6 +47,7 @@ public interface BookingBlacklistService {
      * @param request blacklist entry payload
      * @return created blacklist entry DTO
      */
+    @PreAuthorize("hasRole('ADMIN')")
     BookingBlacklistEntryResponseDto createEntry(BookingBlacklistEntryRequestDto request);
 
     /**
@@ -51,5 +55,6 @@ public interface BookingBlacklistService {
      *
      * @param id blacklist entry identifier
      */
+    @PreAuthorize("hasRole('ADMIN')")
     void deleteEntry(UUID id);
 }

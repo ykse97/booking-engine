@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO representing availability of a single time slot for a barber.
+ * DTO representing availability of a single time slot for a employee.
  */
 @Data
 @Builder

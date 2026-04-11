@@ -4,9 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.booking.engine.properties.JwtProperties;
+import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
@@ -54,6 +58,26 @@ class JwtServiceTest {
     }
 
     @Test
+    void generateTokenWithVersionClaimValidatesAgainstExpectedTokenVersion() {
+        JwtProperties properties = new JwtProperties();
+        properties.setSecret("raw-secret-for-tests-12345678901234567890!");
+        properties.setExpirationSeconds(3600);
+        properties.setIssuer("booking-engine");
+        JwtService jwtService = new JwtService(properties);
+
+        UserDetails userDetails = User.withUsername("admin")
+                .password("ignored")
+                .authorities("ROLE_ADMIN")
+                .build();
+
+        String token = jwtService.generateToken(userDetails, Map.of(), 7);
+
+        assertThat(jwtService.extractTokenVersion(token)).isEqualTo(7);
+        assertThat(jwtService.isTokenValid(token, userDetails, 7)).isTrue();
+        assertThat(jwtService.isTokenValid(token, userDetails, 8)).isFalse();
+    }
+
+    @Test
     void tokenExtractionFailsWhenExpired() {
         JwtProperties properties = new JwtProperties();
         properties.setSecret("another-raw-secret-for-tests-123456789012345!");
@@ -70,5 +94,42 @@ class JwtServiceTest {
 
         assertThatThrownBy(() -> jwtService.isTokenValid(token, userDetails))
                 .isInstanceOf(ExpiredJwtException.class);
+    }
+
+    @Test
+    void tokenValidationRejectsUnexpectedIssuer() {
+        JwtProperties properties = new JwtProperties();
+        properties.setSecret("raw-secret-for-tests-12345678901234567890!");
+        properties.setExpirationSeconds(3600);
+        properties.setIssuer("booking-engine");
+        JwtService jwtService = new JwtService(properties);
+
+        UserDetails userDetails = User.withUsername("admin")
+                .password("ignored")
+                .authorities("ROLE_ADMIN")
+                .build();
+
+        String token = Jwts.builder()
+                .subject("admin")
+                .issuer("different-issuer")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 60_000))
+                .signWith(Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        assertThatThrownBy(() -> jwtService.isTokenValid(token, userDetails))
+                .isInstanceOf(IncorrectClaimException.class);
+    }
+
+    @Test
+    void constructorFailsFastWhenJwtSecretIsTooWeak() {
+        JwtProperties properties = new JwtProperties();
+        properties.setSecret("short-secret");
+        properties.setExpirationSeconds(3600);
+        properties.setIssuer("booking-engine");
+
+        assertThatThrownBy(() -> new JwtService(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid JWT secret configuration");
     }
 }

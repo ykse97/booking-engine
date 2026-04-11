@@ -39,7 +39,7 @@ public class AdminHairSalonController {
     public ResponseEntity<Void> updateHairSalonData(
             @Valid @RequestBody HairSalonRequestDto request) {
 
-        log.info("HTTP PUT /api/v1/admin/hair-salon");
+        log.info("event=http_request method=PUT path=/api/v1/admin/hair-salon");
         hairSalonService.updateHairSalonData(request);
         return ResponseEntity.noContent().build();
     }

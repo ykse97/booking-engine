@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link HairSalonService}.
- * Manages hair salon data configuration and settings.
+ * Provides hair salon related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -26,12 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class HairSalonServiceImpl implements HairSalonService {
-
-    // ---------------------- Properties ----------------------
-
-    /** Default hair salon ID configuration. */
-    private final HairSalonProperties properties;
-
     // ---------------------- Repositories ----------------------
 
     private final HairSalonRepository hairSalonRepository;
@@ -40,6 +34,11 @@ public class HairSalonServiceImpl implements HairSalonService {
 
     private final HairSalonMapper mapper;
 
+    // ---------------------- Properties ----------------------
+
+    /** Default hair salon ID configuration. */
+    private final HairSalonProperties properties;
+
     // ---------------------- Public Methods ----------------------
 
     /**
@@ -47,11 +46,11 @@ public class HairSalonServiceImpl implements HairSalonService {
      */
     @Override
     public HairSalonResponseDto getHairSalonData() {
-        log.info("Fetching hair salon data with ID={}", properties.getId());
+        log.debug("event=hair_salon_get action=start hairSalonId={}", properties.getId());
 
         HairSalonEntity salon = findSalonOrThrow(properties.getId());
 
-        log.info("Hair salon data fetched successfully with ID={}", properties.getId());
+        log.debug("event=hair_salon_get action=success hairSalonId={}", properties.getId());
         return mapper.toDto(salon);
     }
 
@@ -61,12 +60,12 @@ public class HairSalonServiceImpl implements HairSalonService {
     @Transactional
     @Override
     public void updateHairSalonData(HairSalonRequestDto request) {
-        log.info("Updating hair salon with ID={}", properties.getId());
+        log.info("event=hair_salon_update action=start hairSalonId={}", properties.getId());
 
         HairSalonEntity salon = findSalonOrThrow(properties.getId());
         mapper.updateFromDto(request, salon);
 
-        log.info("Hair salon data updated successfully with ID={}", properties.getId());
+        log.info("event=hair_salon_update action=success hairSalonId={}", properties.getId());
     }
 
     // ---------------------- Private Methods ----------------------
@@ -75,13 +74,15 @@ public class HairSalonServiceImpl implements HairSalonService {
      * Finds hair salon by ID or throws exception.
      *
      * @param id the salon ID
+     *
      * @return the hair salon entity
+     *
      * @throws EntityNotFoundException if not found
      */
     private HairSalonEntity findSalonOrThrow(java.util.UUID id) {
         return hairSalonRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Hair salon not found with ID={}", id);
+                    log.warn("event=hair_salon_lookup outcome=not_found hairSalonId={}", id);
                     return new EntityNotFoundException("HairSalon", id);
                 });
     }

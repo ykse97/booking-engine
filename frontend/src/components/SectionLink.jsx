@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { scrollWindowToElement, scrollWindowToTop } from '../utils/scroll';
-
-const PENDING_SCROLL_KEY = 'pending-section-scroll';
+import { preparePendingNavigation } from '../utils/navigation';
+import { requestDeferredSectionMount } from '../utils/deferredSections';
 
 export default function SectionLink({
     sectionId,
@@ -28,7 +28,9 @@ export default function SectionLink({
                 return;
             }
 
+            requestDeferredSectionMount(sectionId);
             const target = document.getElementById(sectionId);
+
             if (target) {
                 scrollWindowToElement(target, {
                     behavior: 'smooth',
@@ -46,15 +48,7 @@ export default function SectionLink({
             return;
         }
 
-        sessionStorage.setItem(
-            PENDING_SCROLL_KEY,
-            JSON.stringify({
-                path: fallbackPath,
-                sectionId: sectionId || null,
-                ts: Date.now()
-            })
-        );
-
+        preparePendingNavigation(fallbackPath, sectionId || null);
         onNavigate?.();
         navigate(fallbackPath);
     }

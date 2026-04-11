@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { publicApi } from '../api/publicApi';
+import { reportAppError } from '../utils/appErrorBus';
 
 let cachedInfo = null;
 let pendingRequest = null;
+let failureReported = false;
 
 export default function useHairSalonInfo() {
     const [info, setInfo] = useState(cachedInfo);
@@ -21,7 +23,17 @@ export default function useHairSalonInfo() {
                     cachedInfo = data;
                     return data;
                 })
-                .catch(() => null)
+                .catch((error) => {
+                    if (!failureReported) {
+                        failureReported = true;
+                        reportAppError(error, {
+                            source: 'hair-salon-info',
+                            message: 'Some salon details could not be loaded. Showing fallback contact information for now.'
+                        });
+                    }
+
+                    return null;
+                })
                 .finally(() => {
                     pendingRequest = null;
                 });
@@ -31,8 +43,13 @@ export default function useHairSalonInfo() {
             .then((data) => {
                 if (active && data) setInfo(data);
             })
-            .catch(() => {
-                // ignore; fallback handled by callers
+            .catch((error) => {
+                reportAppError(error, {
+                    source: 'hair-salon-info',
+                    level: 'warn',
+                    message: 'Salon details are temporarily unavailable.',
+                    notify: false
+                });
             });
 
         return () => {

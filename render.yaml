@@ -8,6 +8,8 @@ services:
     healthCheckPath: /actuator/health
     maxShutdownDelaySeconds: 120
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -31,9 +33,11 @@ services:
       - key: APP_STRIPE_CURRENCY
         value: eur
       - key: APP_ADMIN_BOOTSTRAP_ENABLED
-        value: "true"
+        value: "false"
+      - key: APP_ADMIN_BOOTSTRAP_ALLOW_PASSWORD_OVERWRITE
+        value: "false"
       - key: APP_ADMIN_BOOTSTRAP_USERNAME
-        value: admin
+        sync: false
       - key: APP_ADMIN_BOOTSTRAP_PASSWORD
         sync: false
       - key: APP_JWT_SECRET
@@ -42,6 +46,10 @@ services:
         value: "3600"
       - key: APP_JWT_ISSUER
         value: booking-engine
+      - key: APP_AUTH_COOKIE_SECURE
+        value: "true"
+      - key: APP_AUTH_COOKIE_SAME_SITE
+        value: None
 
   - type: web
     runtime: static
@@ -52,6 +60,40 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         sync: false
+    # The frontend is served by Render Static Site, so browser-facing security
+    # headers must be enforced here at the CDN edge rather than in Spring Boot.
+    # The CSP below assumes the API is same-origin or hosted on Render
+    # (`https://*.onrender.com`). If you move the API to a custom domain, tighten
+    # connect-src to that exact origin during deployment.
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: >-
+          default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
+          form-action 'self'; script-src 'self' https://js.stripe.com; style-src 'self'
+          'unsafe-inline' https://fonts.googleapis.com; font-src 'self'
+          https://fonts.gstatic.com data:; img-src 'self' data:
+          https://images.unsplash.com https://*.stripe.com; connect-src 'self'
+          https://*.onrender.com https://fonts.googleapis.com
+          https://fonts.gstatic.com https://js.stripe.com https://api.stripe.com
+          https://*.stripe.com https://m.stripe.network; frame-src 'self'
+          https://js.stripe.com https://*.stripe.com; media-src 'self';
+          manifest-src 'self'
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), geolocation=(), microphone=(), usb=(), browsing-topics=()
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000
     routes:
       - type: redirect
         source: /admin

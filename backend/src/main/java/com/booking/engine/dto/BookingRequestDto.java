@@ -31,8 +31,8 @@ public class BookingRequestDto {
 
     // ---------------------- Slot Selection ----------------------
 
-    @NotNull(message = "Barber ID is required")
-    private UUID barberId;
+    @NotNull(message = "Employee ID is required")
+    private UUID employeeId;
 
     @NotNull(message = "Treatment ID is required")
     private UUID treatmentId;

@@ -11,6 +11,8 @@ package com.booking.engine.exception;
  */
 public class BookingValidationException extends RuntimeException {
 
+    private final String clientMessage;
+
     /**
      * Constructs a new booking validation exception with the specified detail
      * message.
@@ -19,6 +21,7 @@ public class BookingValidationException extends RuntimeException {
      */
     public BookingValidationException(String message) {
         super(message);
+        this.clientMessage = message;
     }
 
     /**
@@ -30,5 +33,10 @@ public class BookingValidationException extends RuntimeException {
      */
     public BookingValidationException(String message, Throwable cause) {
         super(message, cause);
+        this.clientMessage = message;
+    }
+
+    public String getClientMessage() {
+        return clientMessage;
     }
 }

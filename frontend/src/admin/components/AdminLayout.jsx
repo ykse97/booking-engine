@@ -4,7 +4,7 @@ import AdminColorSchemeToggle from './AdminColorSchemeToggle';
 
 const NAV_ITEMS = [
     { to: '/bookings', label: 'Bookings', icon: CalendarDays },
-    { to: '/barbers', label: 'Barbers', icon: Scissors },
+    { to: '/employees', label: 'Employees', icon: Scissors },
     { to: '/treatments', label: 'Treatments', icon: Sparkles },
     { to: '/salon', label: 'Salon', icon: Store }
 ];

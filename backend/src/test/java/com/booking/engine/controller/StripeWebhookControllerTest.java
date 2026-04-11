@@ -11,12 +11,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.booking.engine.properties.StripeProperties;
-import com.booking.engine.service.BookingService;
+import com.booking.engine.service.BookingPaymentSyncService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.net.Webhook;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,7 @@ class StripeWebhookControllerTest {
     @Mock
     private StripeProperties stripeProperties;
     @Mock
-    private BookingService bookingService;
+    private BookingPaymentSyncService bookingService;
 
     @InjectMocks
     private StripeWebhookController controller;
@@ -53,6 +54,7 @@ class StripeWebhookControllerTest {
         PaymentIntent intent = mock(PaymentIntent.class);
         when(intent.getId()).thenReturn("pi_1");
         when(intent.getStatus()).thenReturn("succeeded");
+        when(intent.getMetadata()).thenReturn(Map.of("slotHoldId", "hold-1"));
 
         Event event = mock(Event.class);
         EventDataObjectDeserializer deserializer = mock(EventDataObjectDeserializer.class);
@@ -74,7 +76,8 @@ class StripeWebhookControllerTest {
         verify(bookingService).syncStripePaymentIntentFromWebhook(
                 "pi_1",
                 "succeeded",
-                "payment_intent.succeeded");
+                "payment_intent.succeeded",
+                Map.of("slotHoldId", "hold-1"));
     }
 
     @Test

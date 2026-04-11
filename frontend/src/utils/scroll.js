@@ -2,6 +2,46 @@ const DEFAULT_SITE_HEADER_HEIGHT = 108;
 const AUTO_SCROLL_HIDDEN_CLASS = 'auto-scroll-hidden';
 
 let autoScrollHideTimeoutId = null;
+let activeScrollSequenceCleanup = null;
+
+export function cancelActiveScrollSequence() {
+    if (!activeScrollSequenceCleanup) {
+        return;
+    }
+
+    const cleanup = activeScrollSequenceCleanup;
+    activeScrollSequenceCleanup = null;
+    cleanup();
+}
+
+export function setActiveScrollSequence(cleanup) {
+    cancelActiveScrollSequence();
+
+    if (typeof cleanup !== 'function') {
+        return () => {};
+    }
+
+    let cleanedUp = false;
+
+    const wrappedCleanup = () => {
+        if (cleanedUp) {
+            return;
+        }
+
+        cleanedUp = true;
+        cleanup();
+    };
+
+    activeScrollSequenceCleanup = wrappedCleanup;
+
+    return () => {
+        if (activeScrollSequenceCleanup === wrappedCleanup) {
+            activeScrollSequenceCleanup = null;
+        }
+
+        wrappedCleanup();
+    };
+}
 
 function parseHeaderHeight(value) {
     const numericValue = Number.parseFloat(String(value || '').trim());
@@ -10,7 +50,7 @@ function parseHeaderHeight(value) {
         : DEFAULT_SITE_HEADER_HEIGHT;
 }
 
-export function getSiteHeaderHeight() {
+function getSiteHeaderHeight() {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
         return DEFAULT_SITE_HEADER_HEIGHT;
     }
@@ -20,11 +60,11 @@ export function getSiteHeaderHeight() {
     );
 }
 
-export function getSiteHeaderOffset(extraOffset = 16) {
+function getSiteHeaderOffset(extraOffset = 16) {
     return getSiteHeaderHeight() + extraOffset;
 }
 
-export function getScrollTopForElement(element, extraOffset = 16) {
+function getScrollTopForElement(element, extraOffset = 16) {
     if (typeof window === 'undefined' || !element) {
         return null;
     }
@@ -53,7 +93,7 @@ export function setAutoScrollHidden(isHidden) {
     document.documentElement.classList.toggle(AUTO_SCROLL_HIDDEN_CLASS, isHidden);
 }
 
-export function hideAutoScrollbarsTemporarily(duration = 520) {
+function hideAutoScrollbarsTemporarily(duration = 520) {
     if (typeof window === 'undefined') {
         return;
     }

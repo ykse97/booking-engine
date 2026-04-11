@@ -1,0 +1,6 @@
+ALTER TABLE booking
+ADD COLUMN IF NOT EXISTS slot_locked BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE booking
+SET slot_locked = FALSE
+WHERE slot_locked IS NULL;

@@ -7,12 +7,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.booking.engine.dto.BookingCheckoutSessionResponseDto;
 import com.booking.engine.dto.BookingRequestDto;
 import com.booking.engine.dto.BookingResponseDto;
-import com.booking.engine.dto.BookingCheckoutSessionResponseDto;
 import com.booking.engine.entity.BookingStatus;
 import com.booking.engine.exception.GlobalExceptionHandler;
-import com.booking.engine.service.BookingService;
+import com.booking.engine.security.ClientIpResolver;
+import com.booking.engine.security.SecurityAuditLogger;
+import com.booking.engine.service.PublicBookingService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,13 +32,19 @@ class BookingControllerWebMvcTest {
     private MockMvc mockMvc;
 
     @Mock
-    private BookingService bookingService;
+    private PublicBookingService bookingService;
+
+    @Mock
+    private ClientIpResolver clientIpResolver;
+
+    @Mock
+    private SecurityAuditLogger securityAuditLogger;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        BookingController controller = new BookingController(bookingService);
+        BookingController controller = new BookingController(bookingService, clientIpResolver, securityAuditLogger);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -80,6 +88,7 @@ class BookingControllerWebMvcTest {
                 .build();
 
         when(bookingService.holdSlot(any(), any(), any())).thenReturn(response);
+        when(clientIpResolver.resolve(any())).thenReturn("203.0.113.10");
 
         mockMvc.perform(post("/api/v1/public/bookings/hold")
                         .header("X-Booking-Device-Id", "device-123")
@@ -111,6 +120,23 @@ class BookingControllerWebMvcTest {
     }
 
     @Test
+    void validateHeldBookingCheckoutShouldReturn204WhenPayloadIsValid() throws Exception {
+        mockMvc.perform(post("/api/v1/public/bookings/{id}/checkout/validate", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validCheckoutValidationRequestJson()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void validateHeldBookingCheckoutShouldReturn400WhenCustomerEmailMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/public/bookings/{id}/checkout/validate", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidCheckoutValidationRequestJsonWithoutEmail()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors['customer.email']").exists());
+    }
+
+    @Test
     void confirmHeldBookingShouldReturn400WhenPaymentIntentIdMissing() throws Exception {
         mockMvc.perform(post("/api/v1/public/bookings/{id}/confirm", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -138,7 +164,7 @@ class BookingControllerWebMvcTest {
     private String validRequestJson() {
         return """
                 {
-                  "barberId": "11111111-1111-1111-1111-111111111111",
+                  "employeeId": "11111111-1111-1111-1111-111111111111",
                   "treatmentId": "22222222-2222-2222-2222-222222222222",
                   "bookingDate": "2030-01-15",
                   "startTime": "10:00:00",
@@ -156,7 +182,7 @@ class BookingControllerWebMvcTest {
     private String validHoldRequestJson() {
         return """
                 {
-                  "barberId": "11111111-1111-1111-1111-111111111111",
+                  "employeeId": "11111111-1111-1111-1111-111111111111",
                   "treatmentId": "22222222-2222-2222-2222-222222222222",
                   "bookingDate": "2030-01-15",
                   "startTime": "10:00:00",
@@ -168,7 +194,7 @@ class BookingControllerWebMvcTest {
     private String invalidRequestJsonWithoutPaymentMethod() {
         return """
                 {
-                  "barberId": "11111111-1111-1111-1111-111111111111",
+                  "employeeId": "11111111-1111-1111-1111-111111111111",
                   "treatmentId": "22222222-2222-2222-2222-222222222222",
                   "bookingDate": "2030-01-15",
                   "startTime": "10:00:00",
@@ -200,6 +226,30 @@ class BookingControllerWebMvcTest {
         return """
                 {
                   "paymentIntentId": " "
+                }
+                """;
+    }
+
+    private String validCheckoutValidationRequestJson() {
+        return """
+                {
+                  "customer": {
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "phone": "+353870000000"
+                  }
+                }
+                """;
+    }
+
+    private String invalidCheckoutValidationRequestJsonWithoutEmail() {
+        return """
+                {
+                  "customer": {
+                    "name": "John Doe",
+                    "email": " ",
+                    "phone": "+353870000000"
+                  }
                 }
                 """;
     }

@@ -4,19 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.booking.engine.dto.BookingRequestDto;
-import com.booking.engine.entity.BarberDailyScheduleEntity;
-import com.booking.engine.entity.BarberEntity;
+import com.booking.engine.entity.EmployeeDailyScheduleEntity;
+import com.booking.engine.entity.EmployeeEntity;
 import com.booking.engine.entity.BookingEntity;
 import com.booking.engine.entity.BookingStatus;
+import com.booking.engine.entity.SlotHoldEntity;
+import com.booking.engine.entity.SlotHoldScope;
 import com.booking.engine.entity.TreatmentEntity;
 import com.booking.engine.exception.BookingValidationException;
 import com.booking.engine.properties.BookingProperties;
-import com.booking.engine.repository.BarberDailyScheduleRepository;
-import com.booking.engine.repository.BarberRepository;
+import com.booking.engine.repository.EmployeeDailyScheduleRepository;
+import com.booking.engine.repository.EmployeeRepository;
 import com.booking.engine.repository.BookingRepository;
+import com.booking.engine.repository.SlotHoldRepository;
 import com.booking.engine.repository.TreatmentRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,10 +45,13 @@ class AvailabilityServiceImplTest {
     private BookingRepository bookingRepository;
 
     @Mock
-    private BarberRepository barberRepository;
+    private SlotHoldRepository slotHoldRepository;
 
     @Mock
-    private BarberDailyScheduleRepository barberScheduleRepository;
+    private EmployeeRepository employeeRepository;
+
+    @Mock
+    private EmployeeDailyScheduleRepository employeeScheduleRepository;
 
     @Mock
     private TreatmentRepository treatmentRepository;
@@ -55,19 +62,25 @@ class AvailabilityServiceImplTest {
     @InjectMocks
     private AvailabilityServiceImpl availabilityService;
 
-    private UUID barberId;
+    private UUID employeeId;
     private UUID treatmentId;
     private BookingRequestDto request;
 
     @BeforeEach
     void setUp() {
-        barberId = UUID.randomUUID();
+        employeeId = UUID.randomUUID();
         treatmentId = UUID.randomUUID();
 
-        when(bookingProperties.getTimezone()).thenReturn("Europe/Dublin");
+        lenient().when(bookingProperties.getTimezone()).thenReturn("Europe/Dublin");
+        lenient().when(employeeRepository.existsActiveEmployeeTreatment(employeeId, treatmentId)).thenReturn(true);
+        lenient().when(slotHoldRepository.findActiveByEmployeeIdAndBookingDate(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of());
 
         request = BookingRequestDto.builder()
-                .barberId(barberId)
+                .employeeId(employeeId)
                 .treatmentId(treatmentId)
                 .bookingDate(LocalDate.now().plusDays(1))
                 .startTime(LocalTime.of(10, 0))
@@ -83,42 +96,42 @@ class AvailabilityServiceImplTest {
 
     @Test
     void validateBookingRequestShouldIgnoreTreatmentDurationMismatchForFixedSlotFlow() {
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(90);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 request.getBookingDate(),
                 LocalTime.of(9, 0),
                 LocalTime.of(18, 0),
                 LocalTime.of(13, 0),
                 LocalTime.of(14, 0));
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, request.getBookingDate()))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 request.getBookingDate(),
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of());
 
         assertDoesNotThrow(() -> availabilityService.validateBookingRequest(request));
     }
 
     @Test
-    void validateBookingRequestShouldFailWhenOutsideBarberHours() {
-        BarberEntity barber = buildActiveBarber();
+    void validateBookingRequestShouldFailWhenOutsideEmployeeHours() {
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 request.getBookingDate(),
                 LocalTime.of(11, 0),
                 LocalTime.of(20, 0),
                 LocalTime.of(13, 0),
                 LocalTime.of(14, 0));
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, request.getBookingDate()))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
                 .thenReturn(Optional.of(hours));
 
         assertThrows(BookingValidationException.class, () -> availabilityService.validateBookingRequest(request));
@@ -126,9 +139,9 @@ class AvailabilityServiceImplTest {
 
     @Test
     void validateBookingRequestShouldFailWhenSlotConflictsWithConfirmedBooking() {
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 request.getBookingDate(),
                 LocalTime.of(9, 0),
                 LocalTime.of(18, 0),
@@ -140,14 +153,14 @@ class AvailabilityServiceImplTest {
         existing.setStartTime(LocalTime.of(10, 15));
         existing.setEndTime(LocalTime.of(10, 45));
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, request.getBookingDate()))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 request.getBookingDate(),
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of(existing));
 
         BookingValidationException exception = assertThrows(
@@ -159,9 +172,9 @@ class AvailabilityServiceImplTest {
 
     @Test
     void validateBookingRequestShouldFailWhenSlotIsHeldByAnotherGuest() {
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 request.getBookingDate(),
                 LocalTime.of(9, 0),
                 LocalTime.of(18, 0),
@@ -175,7 +188,7 @@ class AvailabilityServiceImplTest {
         heldBooking.setExpiresAt(LocalDateTime.now().plusMinutes(10));
 
         BookingRequestDto heldRequest = BookingRequestDto.builder()
-                .barberId(barberId)
+                .employeeId(employeeId)
                 .treatmentId(treatmentId)
                 .bookingDate(request.getBookingDate())
                 .startTime(LocalTime.of(10, 0))
@@ -184,14 +197,14 @@ class AvailabilityServiceImplTest {
                 .customer(request.getCustomer())
                 .build();
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, request.getBookingDate()))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 request.getBookingDate(),
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of(heldBooking));
 
         BookingValidationException exception = assertThrows(
@@ -205,9 +218,9 @@ class AvailabilityServiceImplTest {
 
     @Test
     void validateBookingRequestShouldFailWhenSlotOverlapsBreak() {
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(60);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 request.getBookingDate(),
                 LocalTime.of(9, 0),
                 LocalTime.of(18, 0),
@@ -215,7 +228,7 @@ class AvailabilityServiceImplTest {
                 LocalTime.of(14, 0));
 
         BookingRequestDto breakRequest = BookingRequestDto.builder()
-                .barberId(barberId)
+                .employeeId(employeeId)
                 .treatmentId(treatmentId)
                 .bookingDate(request.getBookingDate())
                 .startTime(LocalTime.of(13, 0))
@@ -224,19 +237,53 @@ class AvailabilityServiceImplTest {
                 .customer(request.getCustomer())
                 .build();
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, request.getBookingDate()))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
                 .thenReturn(Optional.of(hours));
 
         assertThrows(BookingValidationException.class, () -> availabilityService.validateBookingRequest(breakRequest));
     }
 
     @Test
+    void validateBookingRequestShouldPassWhenBreakIsAbsent() {
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(60);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                request.getBookingDate(),
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                null,
+                null);
+
+        BookingRequestDto noBreakRequest = BookingRequestDto.builder()
+                .employeeId(employeeId)
+                .treatmentId(treatmentId)
+                .bookingDate(request.getBookingDate())
+                .startTime(LocalTime.of(13, 0))
+                .endTime(LocalTime.of(14, 0))
+                .paymentMethodId("pm_card_visa")
+                .customer(request.getCustomer())
+                .build();
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                request.getBookingDate(),
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of());
+
+        assertDoesNotThrow(() -> availabilityService.validateBookingRequest(noBreakRequest));
+    }
+
+    @Test
     void getAvailabilityShouldReturnHourlySlotsWithBreakAndBookedStatuses() {
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 request.getBookingDate(),
                 LocalTime.of(9, 0),
                 LocalTime.of(12, 0),
@@ -248,17 +295,17 @@ class AvailabilityServiceImplTest {
         existing.setStartTime(LocalTime.of(11, 0));
         existing.setEndTime(LocalTime.of(12, 0));
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, request.getBookingDate()))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 request.getBookingDate(),
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of(existing));
 
-        var result = availabilityService.getAvailability(barberId, request.getBookingDate(), treatmentId);
+        var result = availabilityService.getAvailability(employeeId, request.getBookingDate(), treatmentId);
 
         assertEquals(3, result.size());
         assertEquals("AVAILABLE", result.get(0).getStatus());
@@ -271,9 +318,9 @@ class AvailabilityServiceImplTest {
     @Test
     void getAvailabilityShouldReturnHeldStatusForActivePendingBooking() {
         LocalDate futureDate = LocalDate.now().plusDays(2);
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 futureDate,
                 LocalTime.of(9, 0),
                 LocalTime.of(12, 0),
@@ -286,17 +333,17 @@ class AvailabilityServiceImplTest {
         heldBooking.setEndTime(LocalTime.of(11, 0));
         heldBooking.setExpiresAt(LocalDateTime.now().plusMinutes(10));
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, futureDate))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, futureDate))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 futureDate,
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of(heldBooking));
 
-        var result = availabilityService.getAvailability(barberId, futureDate, treatmentId);
+        var result = availabilityService.getAvailability(employeeId, futureDate, treatmentId);
 
         assertEquals("AVAILABLE", result.get(0).getStatus());
         assertEquals("HELD", result.get(1).getStatus());
@@ -305,11 +352,83 @@ class AvailabilityServiceImplTest {
     }
 
     @Test
+    void getAvailabilityShouldReturnHeldStatusForActiveAdminSlotHold() {
+        LocalDate futureDate = LocalDate.now().plusDays(2);
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                futureDate,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0),
+                null,
+                null);
+
+        SlotHoldEntity adminSlotHold = new SlotHoldEntity();
+        adminSlotHold.setActive(true);
+        adminSlotHold.setHoldScope(SlotHoldScope.ADMIN);
+        adminSlotHold.setStartTime(LocalTime.of(10, 0));
+        adminSlotHold.setEndTime(LocalTime.of(11, 0));
+        adminSlotHold.setExpiresAt(LocalDateTime.now().plusMinutes(2));
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, futureDate))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                futureDate,
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of());
+        when(slotHoldRepository.findActiveByEmployeeIdAndBookingDate(
+                org.mockito.ArgumentMatchers.eq(employeeId),
+                org.mockito.ArgumentMatchers.eq(futureDate),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+                .thenReturn(List.of(adminSlotHold));
+
+        var result = availabilityService.getAvailability(employeeId, futureDate, treatmentId);
+
+        assertEquals("AVAILABLE", result.get(0).getStatus());
+        assertEquals("HELD", result.get(1).getStatus());
+        assertEquals("AVAILABLE", result.get(2).getStatus());
+        assertFalse(result.get(1).isAvailable());
+    }
+
+    @Test
+    void getAvailabilityShouldRejectNonBookableEmployee() {
+        EmployeeEntity employee = buildActiveEmployee();
+        employee.setBookable(false);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        BookingValidationException exception = assertThrows(
+                BookingValidationException.class,
+                () -> availabilityService.getAvailability(employeeId, request.getBookingDate(), treatmentId));
+
+        assertEquals("Employee is not available for booking", exception.getMessage());
+    }
+
+    @Test
+    void getAvailabilityShouldRejectUnsupportedEmployeeTreatmentPair() {
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(employeeRepository.existsActiveEmployeeTreatment(employeeId, treatmentId)).thenReturn(false);
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+
+        BookingValidationException exception = assertThrows(
+                BookingValidationException.class,
+                () -> availabilityService.getAvailability(employeeId, request.getBookingDate(), treatmentId));
+
+        assertEquals("This employee does not provide the selected service.", exception.getMessage());
+    }
+
+    @Test
     void getAvailabilityShouldTreatPaidPendingBookingAsBooked() {
         LocalDate futureDate = LocalDate.now().plusDays(2);
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 futureDate,
                 LocalTime.of(9, 0),
                 LocalTime.of(12, 0),
@@ -324,17 +443,17 @@ class AvailabilityServiceImplTest {
         paidPendingBooking.setStripePaymentStatus("succeeded");
         paidPendingBooking.setPaymentCapturedAt(LocalDateTime.now());
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, futureDate))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, futureDate))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 futureDate,
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of(paidPendingBooking));
 
-        var result = availabilityService.getAvailability(barberId, futureDate, treatmentId);
+        var result = availabilityService.getAvailability(employeeId, futureDate, treatmentId);
 
         assertEquals("AVAILABLE", result.get(0).getStatus());
         assertEquals("BOOKED", result.get(1).getStatus());
@@ -345,9 +464,9 @@ class AvailabilityServiceImplTest {
     @Test
     void getAvailabilityShouldMarkEndedBookedSlotsAsPast() {
         LocalDate pastDate = LocalDate.now().minusDays(1);
-        BarberEntity barber = buildActiveBarber();
+        EmployeeEntity employee = buildActiveEmployee();
         TreatmentEntity treatment = buildActiveTreatment(30);
-        BarberDailyScheduleEntity hours = buildWorkingDay(
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
                 pastDate,
                 LocalTime.of(9, 0),
                 LocalTime.of(12, 0),
@@ -359,17 +478,17 @@ class AvailabilityServiceImplTest {
         finishedBooking.setStartTime(LocalTime.of(10, 0));
         finishedBooking.setEndTime(LocalTime.of(11, 0));
 
-        when(barberRepository.findById(barberId)).thenReturn(Optional.of(barber));
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
         when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
-        when(barberScheduleRepository.findByBarberIdAndWorkingDate(barberId, pastDate))
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, pastDate))
                 .thenReturn(Optional.of(hours));
-        when(bookingRepository.findByBarberIdAndBookingDateAndStatusIn(
-                barberId,
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
                 pastDate,
-                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)))
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
                 .thenReturn(List.of(finishedBooking));
 
-        var result = availabilityService.getAvailability(barberId, pastDate, treatmentId);
+        var result = availabilityService.getAvailability(employeeId, pastDate, treatmentId);
 
         assertEquals("PAST", result.get(0).getStatus());
         assertEquals("PAST", result.get(1).getStatus());
@@ -377,11 +496,220 @@ class AvailabilityServiceImplTest {
         assertFalse(result.get(1).isAvailable());
     }
 
-    private BarberEntity buildActiveBarber() {
-        BarberEntity barber = new BarberEntity();
-        barber.setId(barberId);
-        barber.setActive(true);
-        return barber;
+    @Test
+    void validateSlotSelectionExcludingBookingShouldIgnoreCurrentBooking() {
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(60);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                request.getBookingDate(),
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                null,
+                null);
+
+        UUID currentBookingId = UUID.randomUUID();
+        BookingEntity existing = new BookingEntity();
+        existing.setId(currentBookingId);
+        existing.setStatus(BookingStatus.CONFIRMED);
+        existing.setStartTime(request.getStartTime());
+        existing.setEndTime(request.getEndTime());
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                request.getBookingDate(),
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of(existing));
+
+        assertDoesNotThrow(() -> availabilityService.validateSlotSelectionExcludingBooking(
+                employeeId,
+                treatmentId,
+                request.getBookingDate(),
+                request.getStartTime(),
+                request.getEndTime(),
+                currentBookingId));
+    }
+
+    @Test
+    void validateBookingRequestShouldFailWhenAdminCancelledSlotRemainsLocked() {
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                request.getBookingDate(),
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                null,
+                null);
+
+        BookingEntity cancelledLockedBooking = new BookingEntity();
+        cancelledLockedBooking.setStatus(BookingStatus.CANCELLED);
+        cancelledLockedBooking.setSlotLocked(true);
+        cancelledLockedBooking.setStartTime(request.getStartTime());
+        cancelledLockedBooking.setEndTime(request.getEndTime());
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                request.getBookingDate(),
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of(cancelledLockedBooking));
+
+        BookingValidationException exception = assertThrows(
+                BookingValidationException.class,
+                () -> availabilityService.validateBookingRequest(request));
+
+        assertEquals("This slot has already been booked by someone else.", exception.getMessage());
+    }
+
+    @Test
+    void validateBookingRequestShouldFailWhenSlotConflictsWithActiveAdminSlotHold() {
+        LocalDate futureDate = LocalDate.now().plusDays(2);
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                futureDate,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0),
+                null,
+                null);
+
+        SlotHoldEntity adminSlotHold = new SlotHoldEntity();
+        adminSlotHold.setActive(true);
+        adminSlotHold.setHoldScope(SlotHoldScope.ADMIN);
+        adminSlotHold.setStartTime(LocalTime.of(10, 0));
+        adminSlotHold.setEndTime(LocalTime.of(11, 0));
+        adminSlotHold.setExpiresAt(LocalDateTime.now().plusMinutes(2));
+
+        BookingRequestDto heldRequest = BookingRequestDto.builder()
+                .employeeId(employeeId)
+                .treatmentId(treatmentId)
+                .bookingDate(futureDate)
+                .startTime(LocalTime.of(10, 0))
+                .endTime(LocalTime.of(11, 0))
+                .paymentMethodId("pm_card_visa")
+                .customer(request.getCustomer())
+                .build();
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, futureDate))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                futureDate,
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of());
+        when(slotHoldRepository.findActiveByEmployeeIdAndBookingDate(
+                org.mockito.ArgumentMatchers.eq(employeeId),
+                org.mockito.ArgumentMatchers.eq(futureDate),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+                .thenReturn(List.of(adminSlotHold));
+
+        BookingValidationException exception = assertThrows(
+                BookingValidationException.class,
+                () -> availabilityService.validateBookingRequest(heldRequest));
+
+        assertEquals(
+                "This slot has just been held by another guest. Sorry for the inconvenience.",
+                exception.getMessage());
+    }
+
+    @Test
+    void validateBookingRequestShouldFailWhenSlotConflictsWithDoneBooking() {
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                request.getBookingDate(),
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                LocalTime.of(13, 0),
+                LocalTime.of(14, 0));
+
+        BookingEntity existing = new BookingEntity();
+        existing.setStatus(BookingStatus.DONE);
+        existing.setStartTime(LocalTime.of(10, 0));
+        existing.setEndTime(LocalTime.of(10, 30));
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, request.getBookingDate()))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                request.getBookingDate(),
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of(existing));
+
+        BookingValidationException exception = assertThrows(
+                BookingValidationException.class,
+                () -> availabilityService.validateBookingRequest(request));
+
+        assertEquals("This slot has already been booked by someone else.", exception.getMessage());
+    }
+
+    @Test
+    void getAvailabilityShouldTreatFutureDoneBookingAsBooked() {
+        LocalDate futureDate = LocalDate.now().plusDays(2);
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+        EmployeeDailyScheduleEntity hours = buildWorkingDay(
+                futureDate,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0),
+                null,
+                null);
+
+        BookingEntity doneBooking = new BookingEntity();
+        doneBooking.setStatus(BookingStatus.DONE);
+        doneBooking.setStartTime(LocalTime.of(10, 0));
+        doneBooking.setEndTime(LocalTime.of(11, 0));
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+        when(employeeScheduleRepository.findByEmployeeIdAndWorkingDate(employeeId, futureDate))
+                .thenReturn(Optional.of(hours));
+        when(bookingRepository.findByEmployeeIdAndBookingDateAndStatusIn(
+                employeeId,
+                futureDate,
+                List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.DONE)))
+                .thenReturn(List.of(doneBooking));
+
+        var result = availabilityService.getAvailability(employeeId, futureDate, treatmentId);
+
+        assertEquals("AVAILABLE", result.get(0).getStatus());
+        assertEquals("BOOKED", result.get(1).getStatus());
+        assertEquals("AVAILABLE", result.get(2).getStatus());
+        assertFalse(result.get(1).isAvailable());
+    }
+
+    @Test
+    void validateBookingRequestShouldFailWhenEmployeeDoesNotProvideTreatment() {
+        EmployeeEntity employee = buildActiveEmployee();
+        TreatmentEntity treatment = buildActiveTreatment(30);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+        when(employeeRepository.existsActiveEmployeeTreatment(employeeId, treatmentId)).thenReturn(false);
+        when(treatmentRepository.findById(treatmentId)).thenReturn(Optional.of(treatment));
+
+        BookingValidationException exception = assertThrows(
+                BookingValidationException.class,
+                () -> availabilityService.validateBookingRequest(request));
+
+        assertEquals("This employee does not provide the selected service.", exception.getMessage());
+    }
+
+    private EmployeeEntity buildActiveEmployee() {
+        EmployeeEntity employee = new EmployeeEntity();
+        employee.setId(employeeId);
+        employee.setActive(true);
+        employee.setBookable(true);
+        return employee;
     }
 
     private TreatmentEntity buildActiveTreatment(int durationMinutes) {
@@ -392,13 +720,13 @@ class AvailabilityServiceImplTest {
         return treatment;
     }
 
-    private BarberDailyScheduleEntity buildWorkingDay(
+    private EmployeeDailyScheduleEntity buildWorkingDay(
             LocalDate date,
             LocalTime openTime,
             LocalTime closeTime,
             LocalTime breakStart,
             LocalTime breakEnd) {
-        BarberDailyScheduleEntity hours = new BarberDailyScheduleEntity();
+        EmployeeDailyScheduleEntity hours = new EmployeeDailyScheduleEntity();
         hours.setWorkingDate(date);
         hours.setWorkingDay(true);
         hours.setOpenTime(openTime);

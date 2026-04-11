@@ -177,11 +177,6 @@ body {
     pointer-events: none;
 }
 
-.lux-container {
-    @apply w-full mx-auto px-4 relative z-10;
-    max-width: 100%;
-}
-
 .glass-card {
     @apply backdrop-blur-[4px] shadow-card;
     background:
@@ -202,16 +197,6 @@ body {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         inset 0 0 0 1px rgba(244, 220, 169, 0.04);
-}
-
-.lux-heading {
-    @apply font-heading text-center uppercase;
-    color: var(--lux-accent-1);
-    letter-spacing: 0.16em;
-    text-shadow:
-        0 0 16px rgba(255, 255, 255, 0.04),
-        0 4px 16px rgba(0, 0, 0, 0.38);
-    font-size: clamp(1.125rem, 4vw, 1.5rem);
 }
 
 .lux-section-title {
@@ -354,7 +339,6 @@ body {
     box-shadow: 0 0 10px rgba(213, 164, 93, 0.16);
 }
 
-#hero>.lux-container,
 #hero>.services-page-shell {
     position: relative;
     z-index: 10;
@@ -433,27 +417,10 @@ body {
     color: rgba(255, 249, 239, 0.82);
 }
 
-#hero .hero-meta-divider {
-    width: 44px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(244, 220, 169, 0.72), transparent);
-}
-
-#hero .hero-meta-text {
-    font-size: 0.9rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
 #hero .hero-actions {
     display: flex;
     justify-content: center;
     padding-top: 4px;
-}
-
-#hero .hero-actions .btn-gold {
-    width: auto;
-    min-width: 220px;
 }
 
 #hero .hero-media {
@@ -481,33 +448,6 @@ body {
     text-shadow:
         0 0 26px rgba(255, 255, 255, 0.03),
         0 18px 34px rgba(0, 0, 0, 0.34);
-}
-
-#hero .btn-gold {
-    color: #fffdf8;
-    text-shadow:
-        0 1px 0 rgba(0, 0, 0, 0.3),
-        0 0 12px rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.28);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.04) 34%, transparent 36%),
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 40%),
-        linear-gradient(180deg, rgba(34, 34, 34, 0.9), rgba(12, 12, 12, 0.78));
-    box-shadow:
-        0 24px 46px rgba(0, 0, 0, 0.36),
-        0 0 30px rgba(255, 255, 255, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-}
-
-#hero .btn-gold:hover {
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.38);
-    box-shadow:
-        0 28px 50px rgba(0, 0, 0, 0.38),
-        0 0 36px rgba(255, 255, 255, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 
 #hero a[href^='tel:'] {
@@ -596,13 +536,6 @@ html[data-theme='light'] .gold-border {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.72),
         inset 0 0 0 1px rgba(179, 120, 52, 0.08);
-}
-
-html[data-theme='light'] .lux-heading {
-    color: #8d561e;
-    text-shadow:
-        0 0 12px rgba(255, 255, 255, 0.28),
-        0 4px 18px rgba(173, 132, 88, 0.12);
 }
 
 html[data-theme='light'] .lux-section-title {
@@ -728,8 +661,7 @@ html[data-theme='light'] .hero-grain {
     mix-blend-mode: soft-light;
 }
 
-html[data-theme='light'] .hero-eyebrow,
-html[data-theme='light'] .intro-eyebrow {
+html[data-theme='light'] .hero-eyebrow {
     color: #17100a;
     text-shadow:
         0 0 14px rgba(255, 255, 255, 0.42),
@@ -754,8 +686,7 @@ html[data-theme='light'] #hero .hero-content::before {
 }
 
 html[data-theme='light'] #hero .hero-description,
-html[data-theme='light'] #hero .hero-meta,
-html[data-theme='light'] #hero .hero-meta-text {
+html[data-theme='light'] #hero .hero-meta {
     color: #fff6eb;
 }
 
@@ -772,36 +703,11 @@ html[data-theme='light'] #hero .hero-description {
         0 12px 22px rgba(0, 0, 0, 0.28);
 }
 
-html[data-theme='light'] #hero .hero-meta-divider {
-    background: linear-gradient(90deg, transparent, rgba(255, 246, 235, 0.55), transparent);
-}
-
 html[data-theme='light'] #hero h1 {
     color: #fff7ee;
     text-shadow:
         0 0 18px rgba(255, 255, 255, 0.08),
         0 16px 30px rgba(0, 0, 0, 0.34);
-}
-
-html[data-theme='light'] #hero .btn-gold {
-    color: #21150c;
-    border-color: rgba(149, 95, 35, 0.24);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 250, 242, 0.62) 34%, transparent 36%),
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.8), transparent 40%),
-        linear-gradient(180deg, rgba(255, 251, 246, 0.94), rgba(237, 223, 201, 0.92));
-    box-shadow:
-        0 22px 40px rgba(176, 138, 94, 0.18),
-        0 0 26px rgba(255, 255, 255, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.92);
-}
-
-html[data-theme='light'] #hero .btn-gold:hover {
-    border-color: rgba(149, 95, 35, 0.32);
-    box-shadow:
-        0 26px 46px rgba(176, 138, 94, 0.22),
-        0 0 30px rgba(255, 255, 255, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.94);
 }
 
 html[data-theme='light'] #hero a[href^='tel:'] {
@@ -823,37 +729,13 @@ html[data-theme='light'] #hero a[href^='tel:'] {
         gap: 10px;
     }
 
-    #hero .hero-meta-divider {
-        width: 1px;
-        height: 28px;
-        background: linear-gradient(180deg, transparent, rgba(244, 220, 169, 0.72), transparent);
-    }
-
-    html[data-theme='light'] #hero .hero-meta-divider {
-        background: linear-gradient(180deg, transparent, rgba(36, 23, 13, 0.55), transparent);
-    }
-
-    #hero .hero-actions .btn-gold {
-        width: 100%;
-        min-width: 0;
-    }
 }
 
 /* ================= TABLET (640px+) ================= */
 @media (min-width: 640px) {
-    .lux-container {
-        max-width: 560px;
-        padding-left: 24px;
-        padding-right: 24px;
-    }
-
     .glass-card {
         border-radius: 18px;
         padding: 20px;
-    }
-
-    .lux-heading {
-        font-size: 1.25rem;
     }
 
     .lux-section-title {
@@ -893,19 +775,9 @@ html[data-theme='light'] #hero a[href^='tel:'] {
 
 /* ================= LAPTOP (1024px+) ================= */
 @media (min-width: 1024px) {
-    .lux-container {
-        max-width: 500px;
-        padding-left: 32px;
-        padding-right: 32px;
-    }
-
     .glass-card {
         border-radius: 20px;
         padding: 24px;
-    }
-
-    .lux-heading {
-        font-size: 1.375rem;
     }
 
     .lux-section-title {
@@ -939,10 +811,6 @@ html[data-theme='light'] #hero a[href^='tel:'] {
 
 /* ================= DESKTOP (1280px+) ================= */
 @media (min-width: 1280px) {
-    .lux-container {
-        max-width: 520px;
-    }
-
     .lux-shell::before {
         opacity: 0.22;
     }

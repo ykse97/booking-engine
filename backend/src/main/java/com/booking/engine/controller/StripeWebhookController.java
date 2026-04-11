@@ -1,7 +1,7 @@
 package com.booking.engine.controller;
 
 import com.booking.engine.properties.StripeProperties;
-import com.booking.engine.service.BookingService;
+import com.booking.engine.service.BookingPaymentSyncService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -30,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StripeWebhookController {
 
     private final StripeProperties stripeProperties;
-    private final BookingService bookingService;
+    private final BookingPaymentSyncService bookingService;
 
     /**
      * Handles Stripe webhook events.
@@ -40,7 +39,6 @@ public class StripeWebhookController {
      * @return 200 on success, 400 on signature error
      */
     @PostMapping("/webhook")
-    @Transactional
     public ResponseEntity<String> handleWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String signature) {
@@ -49,10 +47,10 @@ public class StripeWebhookController {
             processEvent(event);
             return ResponseEntity.ok("ok");
         } catch (SignatureVerificationException ex) {
-            log.warn("Stripe webhook signature verification failed: {}", ex.getMessage());
+            log.warn("event=stripe_webhook outcome=invalid_signature reason={}", ex.getClass().getSimpleName());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("invalid signature");
         } catch (Exception ex) {
-            log.error("Stripe webhook processing failed", ex);
+            log.error("event=stripe_webhook outcome=processing_failed", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("webhook error");
         }
     }
@@ -66,17 +64,17 @@ public class StripeWebhookController {
     private void processEvent(Event event) {
         String type = event.getType();
         if (event.getDataObjectDeserializer().getObject().isEmpty()) {
-            log.warn("Skipping Stripe event without payload object type={}", type);
+            log.warn("event=stripe_webhook action=skip reason=missing_payload eventType={}", type);
             return;
         }
 
         if (!isPaymentIntentEvent(type)) {
-            log.info("Ignoring Stripe event type={}", type);
+            log.info("event=stripe_webhook action=ignore eventType={}", type);
             return;
         }
 
         PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer().getObject().get();
-        bookingService.syncStripePaymentIntentFromWebhook(intent.getId(), intent.getStatus(), type);
+        bookingService.syncStripePaymentIntentFromWebhook(intent.getId(), intent.getStatus(), type, intent.getMetadata());
     }
 
     /*

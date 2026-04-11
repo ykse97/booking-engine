@@ -5,15 +5,15 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import javax.crypto.SecretKey;
+import io.jsonwebtoken.security.WeakKeyException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
-import lombok.RequiredArgsConstructor;
+import javax.crypto.SecretKey;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 /**
  * Service for JWT generation and validation.
@@ -22,11 +22,18 @@ import org.springframework.stereotype.Service;
  * @version 1.0
  * @since March 2026
  */
-@Service
-@RequiredArgsConstructor
+@Component
 public class JwtService {
 
+    public static final String TOKEN_VERSION_CLAIM = "ver";
+
     private final JwtProperties jwtProperties;
+    private final SecretKey signingKey;
+
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+        this.signingKey = buildSigningKey(jwtProperties.getSecret());
+    }
 
     /**
      * Generates signed JWT access token for authenticated user.
@@ -36,17 +43,55 @@ public class JwtService {
      * @return JWT string
      */
     public String generateToken(UserDetails userDetails, Map<String, Object> claims) {
-        Instant now = Instant.now();
-        Instant expiresAt = now.plusSeconds(jwtProperties.getExpirationSeconds());
+        return buildToken(userDetails, claims);
+    }
 
-        return Jwts.builder()
-                .claims(claims)
-                .subject(userDetails.getUsername())
-                .issuer(jwtProperties.getIssuer())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiresAt))
-                .signWith(getSigningKey())
-                .compact();
+    /**
+     * Generates signed JWT access token that also carries the current admin token
+     * version for server-side invalidation.
+     *
+     * @param userDetails authenticated principal
+     * @param claims additional token claims
+     * @param tokenVersion current persisted token version for this admin
+     * @return JWT string
+     */
+    public String generateToken(UserDetails userDetails, Map<String, Object> claims, int tokenVersion) {
+        Map<String, Object> tokenClaims = new LinkedHashMap<>(claims);
+        tokenClaims.put(TOKEN_VERSION_CLAIM, tokenVersion);
+        return buildToken(userDetails, tokenClaims);
+    }
+
+    /**
+     * Extracts token version from token claims.
+     *
+     * @param token JWT token
+     * @return token version or {@code null} when absent
+     */
+    public Integer extractTokenVersion(String token) {
+        return extractClaims(token).get(TOKEN_VERSION_CLAIM, Integer.class);
+    }
+
+    /**
+     * Validates token against user, expiration, and the expected persisted token
+     * version.
+     *
+     * @param token token string
+     * @param userDetails principal
+     * @param expectedTokenVersion current persisted token version
+     * @return true if valid
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails, int expectedTokenVersion) {
+        Claims claims = extractClaims(token);
+        String username = claims.getSubject();
+        Date expiration = claims.getExpiration();
+        Integer tokenVersion = claims.get(TOKEN_VERSION_CLAIM, Integer.class);
+
+        return username != null
+                && username.equals(userDetails.getUsername())
+                && expiration != null
+                && expiration.after(new Date())
+                && tokenVersion != null
+                && tokenVersion == expectedTokenVersion;
     }
 
     /**
@@ -56,7 +101,7 @@ public class JwtService {
      * @return username
      */
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractClaims(token).getSubject();
     }
 
     /**
@@ -67,37 +112,43 @@ public class JwtService {
      * @return true if valid
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        Claims claims = extractClaims(token);
+        String username = claims.getSubject();
+        Date expiration = claims.getExpiration();
+
+        return username != null
+                && username.equals(userDetails.getUsername())
+                && expiration != null
+                && expiration.after(new Date());
+    }
+
+    private String buildToken(UserDetails userDetails, Map<String, Object> claims) {
+        Instant now = Instant.now();
+        Instant expiresAt = now.plusSeconds(jwtProperties.getExpirationSeconds());
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(userDetails.getUsername())
+                .issuer(jwtProperties.getIssuer())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiresAt))
+                .signWith(signingKey)
+                .compact();
     }
 
     /*
-     * Determines whether the JWT expiration timestamp is already in the past.
+     * Parses and validates signed JWT claims.
      *
      * @param token JWT string
-     * @return {@code true} when the token has expired
+     * @return parsed claims
      */
-    private boolean isTokenExpired(String token) {
-        Date expiration = extractClaim(token, Claims::getExpiration);
-        return expiration.before(new Date());
-    }
-
-    /*
-     * Parses signed JWT claims once and delegates extraction of the required claim
-     * value to the provided resolver function.
-     *
-     * @param token JWT string
-     * @param resolver claim mapping function
-     * @param <T> resolved claim type
-     * @return extracted claim value
-     */
-    private <T> T extractClaim(String token, Function<Claims, T> resolver) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
+    private Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey)
+                .requireIssuer(jwtProperties.getIssuer())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return resolver.apply(claims);
     }
 
     /*
@@ -106,14 +157,19 @@ public class JwtService {
      *
      * @return secret key used for JWT signing and verification
      */
-    private SecretKey getSigningKey() {
-        String secret = jwtProperties.getSecret();
-        byte[] keyBytes;
+    private SecretKey buildSigningKey(String secret) {
         try {
-            keyBytes = Decoders.BASE64.decode(secret);
-        } catch (Exception ignored) {
-            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+            byte[] keyBytes;
+            try {
+                keyBytes = Decoders.BASE64.decode(secret);
+            } catch (Exception ignored) {
+                keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+            }
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (WeakKeyException | IllegalArgumentException ex) {
+            throw new IllegalStateException(
+                    "Invalid JWT secret configuration. Configure at least 256 bits after Base64 decoding or UTF-8 encoding.",
+                    ex);
         }
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

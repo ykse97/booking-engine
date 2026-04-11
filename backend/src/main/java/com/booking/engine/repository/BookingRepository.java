@@ -29,15 +29,15 @@ import java.util.UUID;
 public interface BookingRepository extends JpaRepository<BookingEntity, UUID> {
 
     /**
-     * Finds bookings for barber, date and a set of statuses.
+     * Finds bookings for employee, date and a set of statuses.
      *
-     * @param barberId barber identifier
+     * @param employeeId employee identifier
      * @param bookingDate booking date
      * @param statuses statuses to include
      * @return matching bookings
      */
-    List<BookingEntity> findByBarberIdAndBookingDateAndStatusIn(
-            UUID barberId,
+    List<BookingEntity> findByEmployeeIdAndBookingDateAndStatusIn(
+            UUID employeeId,
             LocalDate bookingDate,
             List<BookingStatus> statuses);
 
@@ -70,14 +70,42 @@ public interface BookingRepository extends JpaRepository<BookingEntity, UUID> {
     Optional<BookingEntity> findByIdForUpdate(@Param("id") UUID id);
 
     /**
-     * Checks whether a barber has at least one booking
+     * Checks whether a employee has at least one booking
      * with status in provided list.
      *
-     * @param barberId barber identifier
+     * @param employeeId employee identifier
      * @param statuses booking statuses to match
      * @return true if matching bookings exist
      */
-    boolean existsByBarberIdAndStatusIn(UUID barberId, List<BookingStatus> statuses);
+    boolean existsByEmployeeIdAndStatusIn(UUID employeeId, List<BookingStatus> statuses);
+
+    /**
+     * Checks whether the employee still has future bookings for the treatment.
+     *
+     * @param employeeId employee identifier
+     * @param treatmentId treatment identifier
+     * @param statuses booking statuses to match
+     * @param today current booking date
+     * @param nowTime current booking time
+     * @return true when future bookings exist for the employee-treatment pair
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BookingEntity b
+            WHERE b.employee.id = :employeeId
+              AND b.treatment.id = :treatmentId
+              AND b.status IN :statuses
+              AND (
+                    b.bookingDate > :today
+                    OR (b.bookingDate = :today AND b.endTime > :nowTime)
+              )
+            """)
+    boolean existsFutureBookingsByEmployeeIdAndTreatmentIdAndStatusIn(
+            @Param("employeeId") UUID employeeId,
+            @Param("treatmentId") UUID treatmentId,
+            @Param("statuses") List<BookingStatus> statuses,
+            @Param("today") LocalDate today,
+            @Param("nowTime") LocalTime nowTime);
 
     /**
      * Finds bookings with the given status that have already expired by timestamp.
@@ -87,6 +115,93 @@ public interface BookingRepository extends JpaRepository<BookingEntity, UUID> {
      * @return matching expired bookings
      */
     List<BookingEntity> findByStatusAndExpiresAtBefore(BookingStatus status, LocalDateTime now);
+
+    /**
+     * Finds pending bookings whose hold window has expired and payment has not
+     * been captured successfully yet.
+     *
+     * @param status booking status to match
+     * @param now cutoff timestamp for expiration
+     * @return matching expired unpaid bookings
+     */
+    @Query("""
+                SELECT b
+                FROM BookingEntity b
+                WHERE b.status = :status
+                AND b.expiresAt IS NOT NULL
+                AND b.expiresAt < :now
+                AND b.paymentCapturedAt IS NULL
+                AND (b.stripePaymentStatus IS NULL OR b.stripePaymentStatus <> 'succeeded')
+            """)
+    List<BookingEntity> findExpiredUnpaidPendingBookings(
+            @Param("status") BookingStatus status,
+            @Param("now") LocalDateTime now);
+
+    /**
+     * Reconciles paid pending bookings into confirmed state in one update
+     * statement.
+     *
+     * @param currentStatus pending status to replace
+     * @param newStatus target confirmed status
+     * @param capturedAt fallback capture timestamp for rows missing one
+     * @return number of updated rows
+     */
+    @Modifying
+    @Query("""
+                UPDATE BookingEntity b
+                SET b.status = :newStatus,
+                    b.expiresAt = NULL,
+                    b.paymentReleasedAt = NULL,
+                    b.slotLocked = FALSE,
+                    b.paymentCapturedAt = COALESCE(b.paymentCapturedAt, :capturedAt)
+                WHERE b.active = TRUE
+                AND b.status = :currentStatus
+                AND (b.paymentCapturedAt IS NOT NULL OR b.stripePaymentStatus = 'succeeded')
+            """)
+    int reconcilePaidPendingBookings(
+            @Param("currentStatus") BookingStatus currentStatus,
+            @Param("newStatus") BookingStatus newStatus,
+            @Param("capturedAt") LocalDateTime capturedAt);
+
+    /**
+     * Finds pending bookings whose payment has already succeeded and therefore
+     * should be reconciled into confirmed state.
+     *
+     * @param status booking status to match
+     * @return matching paid pending bookings
+     */
+    @Query("""
+                SELECT b
+                FROM BookingEntity b
+                WHERE b.active = TRUE
+                AND b.status = :status
+                AND (b.paymentCapturedAt IS NOT NULL OR b.stripePaymentStatus = 'succeeded')
+            """)
+    List<BookingEntity> findPaidPendingBookings(@Param("status") BookingStatus status);
+
+    /**
+     * Expires unpaid pending bookings in one update statement.
+     *
+     * @param currentStatus pending status to replace
+     * @param newStatus target expired status
+     * @param now cutoff timestamp for expiration
+     * @return number of updated rows
+     */
+    @Modifying
+    @Query("""
+                UPDATE BookingEntity b
+                SET b.status = :newStatus,
+                    b.expiresAt = NULL
+                WHERE b.status = :currentStatus
+                AND b.expiresAt IS NOT NULL
+                AND b.expiresAt < :now
+                AND b.paymentCapturedAt IS NULL
+                AND (b.stripePaymentStatus IS NULL OR b.stripePaymentStatus <> 'succeeded')
+            """)
+    int expireUnpaidPendingBookings(
+            @Param("currentStatus") BookingStatus currentStatus,
+            @Param("newStatus") BookingStatus newStatus,
+            @Param("now") LocalDateTime now);
 
     /**
      * Marks confirmed bookings as done when their end date/time is already in the past.
@@ -114,18 +229,36 @@ public interface BookingRepository extends JpaRepository<BookingEntity, UUID> {
             BookingStatus newStatus);
 
     /**
-     * Finds all active bookings with barber and treatment eagerly loaded.
+     * Finds all active bookings with employee and treatment eagerly loaded.
      *
      * @return active bookings with related entities
      */
     @Query("""
                 SELECT b
                 FROM BookingEntity b
-                JOIN FETCH b.barber
+                JOIN FETCH b.employee
                 JOIN FETCH b.treatment
                 WHERE b.active = TRUE
             """)
-    List<BookingEntity> findAllActiveWithBarberAndTreatment();
+    List<BookingEntity> findAllActiveWithEmployeeAndTreatment();
+
+    /**
+     * Returns active bookings with a stored customer phone ordered newest first.
+     *
+     * @return active bookings with customer phone values
+     */
+    List<BookingEntity> findAllByActiveTrueAndCustomerPhoneIsNotNullOrderByCreatedAtDesc();
+
+    /**
+     * Finds pending bookings created for the same admin hold session.
+     *
+     * @param holdClientDeviceId admin hold session device token
+     * @param status booking status to match
+     * @return matching session holds
+     */
+    List<BookingEntity> findByHoldClientDeviceIdAndStatus(
+            String holdClientDeviceId,
+            BookingStatus status);
 
     /**
      * Counts active bookings by status.
@@ -180,5 +313,14 @@ public interface BookingRepository extends JpaRepository<BookingEntity, UUID> {
             @Param("clientDeviceId") String clientDeviceId,
             @Param("status") BookingStatus status,
             @Param("now") LocalDateTime now);
+
+    /**
+     * Physically deletes bookings whose booking date is strictly before cutoff.
+     *
+     * @param cutoffDate exclusive cutoff date
+     * @return number of deleted rows
+     */
+    @Modifying
+    long deleteByBookingDateBefore(LocalDate cutoffDate);
 
 }

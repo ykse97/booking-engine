@@ -1,0 +1,132 @@
+- generic [ref=e9]:
+  - banner [ref=e10]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - link "Home" [ref=e14] [cursor=pointer]:
+          - /url: /
+        - link "Gallery" [ref=e15] [cursor=pointer]:
+          - /url: /
+        - link "Services" [ref=e16] [cursor=pointer]:
+          - /url: /services
+      - link "Royal Chair logo" [ref=e17] [cursor=pointer]:
+        - /url: /
+        - img "Royal Chair logo" [ref=e19]
+      - generic [ref=e20]:
+        - link "Book Now" [active] [ref=e21] [cursor=pointer]:
+          - /url: /booking
+        - link "FAQ" [ref=e22] [cursor=pointer]:
+          - /url: /faq
+        - link "Contact" [ref=e23] [cursor=pointer]:
+          - /url: /booking
+        - generic [ref=e24]:
+          - link "Instagram" [ref=e25] [cursor=pointer]:
+            - /url: https://www.instagram.com/royalchair.ie
+            - img [ref=e26]
+          - link "TikTok" [ref=e28] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@royalchair.ie
+            - img [ref=e29]
+          - button "Switch to light mode" [ref=e31] [cursor=pointer]:
+            - img
+  - main [ref=e32]:
+    - generic [ref=e173]:
+      - generic [ref=e175]:
+        - heading "Royal Chair Booking" [level=1] [ref=e176]
+        - generic "How booking works" [ref=e177]:
+          - paragraph [ref=e178]: Booking your appointment is quick and easy — just follow a few simple steps and you’re all set.
+          - paragraph [ref=e179]: We’ll guide you through everything, from choosing your service to confirming your booking. You can use the Next and Back buttons below, or jump between steps using the bar at the top if you need to change anything.
+          - paragraph [ref=e180]: "Here’s how it works:"
+          - list [ref=e181]:
+            - listitem [ref=e182]: Pick the service you’re after
+            - listitem [ref=e183]: Choose your barber
+            - listitem [ref=e184]: Select a date and a time that suits you
+            - listitem [ref=e185]: Enter your details, review your booking, and confirm
+          - paragraph [ref=e186]: Once you’ve selected a time, we’ll hold it for 10 minutes so you can finish your booking without rushing.
+        - generic [ref=e187]:
+          - generic [ref=e188]:
+            - img [ref=e189]
+            - generic [ref=e191]: Premium service selection
+          - generic [ref=e192]:
+            - img [ref=e193]
+            - generic [ref=e197]: Live availability by date
+          - generic [ref=e198]:
+            - img [ref=e199]
+            - generic [ref=e202]: Secure payment flow
+      - generic [ref=e205]:
+        - generic [ref=e207]:
+          - button "1" [ref=e208] [cursor=pointer]
+          - generic [ref=e209]: Service
+        - generic [ref=e211]:
+          - button "2" [disabled] [ref=e212]
+          - generic [ref=e213]: Barber
+        - generic [ref=e215]:
+          - button "3" [disabled] [ref=e216]
+          - generic [ref=e217]: Time
+        - generic [ref=e219]:
+          - button "4" [disabled] [ref=e220]
+          - generic [ref=e221]: Details
+      - generic [ref=e222]: "<!DOCTYPE HTML> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <style type=\"text/css\"> :root { color-scheme: light dark; } </style> <title>Error response</title> </head> <body> <h1>Error response</h1> <p>Error code: 404</p> <p>Message: File not found.</p> <p>Error code explanation: 404 - Nothing matches the given URI.</p> </body> </html>"
+      - generic [ref=e223]: "<!DOCTYPE HTML> <html lang=\"en\"> <head> <meta charset=\"utf-8\"> <style type=\"text/css\"> :root { color-scheme: light dark; } </style> <title>Error response</title> </head> <body> <h1>Error response</h1> <p>Error code: 404</p> <p>Message: File not found.</p> <p>Error code explanation: 404 - Nothing matches the given URI.</p> </body> </html>"
+      - generic [ref=e226]:
+        - generic [ref=e227]:
+          - paragraph [ref=e228]: Step 1
+          - heading "Choose Your Service" [level=2] [ref=e229]
+        - generic [ref=e231]: No services are currently available for online booking.
+        - button "Next" [disabled] [ref=e233]
+  - contentinfo [ref=e106]:
+    - generic [ref=e107]:
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - img "Royal Chair logo" [ref=e114]
+              - generic [ref=e115]:
+                - paragraph [ref=e116]: Visit Royal Chair
+                - heading "Find Us In Google Maps" [level=3] [ref=e117]
+            - paragraph [ref=e119]: Open the full Royal Chair location in Google Maps, check the latest contact details, or launch turn-by-turn directions straight from your device.
+          - generic [ref=e120]:
+            - link "Open in Google Maps" [ref=e121] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Royal%20Chair%2C%20Ennis%2C%20Ireland
+              - img [ref=e122]
+              - generic [ref=e126]: Open in Google Maps
+            - link "Get Directions" [ref=e127] [cursor=pointer]:
+              - /url: https://www.google.com/maps/dir/?api=1&destination=Royal%20Chair%2C%20Ennis%2C%20Ireland&travelmode=driving
+              - img [ref=e128]
+              - generic [ref=e130]: Get Directions
+        - generic [ref=e132]:
+          - generic [ref=e134]:
+            - img [ref=e135]
+            - generic [ref=e137]:
+              - paragraph [ref=e138]: Phone
+              - paragraph [ref=e139]: +353 00 000 0000
+          - generic [ref=e141]:
+            - img [ref=e142]
+            - generic [ref=e145]:
+              - paragraph [ref=e146]: Location
+              - paragraph [ref=e147]: Royal Chair Barbershop, Ireland
+          - generic [ref=e149]:
+            - img [ref=e150]
+            - generic [ref=e153]:
+              - paragraph [ref=e154]: Hours
+              - paragraph [ref=e155]: "Mon-Fri: 9:00 AM - 5:00 PM | Sat: 10:00 AM - 6:00 PM"
+      - generic [ref=e156]:
+        - generic [ref=e157]:
+          - link [ref=e158] [cursor=pointer]:
+            - /url: https://www.instagram.com/royalchair.ie
+            - img [ref=e159]
+          - link [ref=e161] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@royalchair.ie
+            - img [ref=e162]
+        - generic [ref=e165]:
+          - link "Home" [ref=e166] [cursor=pointer]:
+            - /url: /
+          - link "Services" [ref=e167] [cursor=pointer]:
+            - /url: /services
+          - link "Booking" [ref=e168] [cursor=pointer]:
+            - /url: /booking
+          - link "Barbers" [ref=e169] [cursor=pointer]:
+            - /url: /
+          - link "FAQ" [ref=e170] [cursor=pointer]:
+            - /url: /faq
+        - generic [ref=e172]:
+          - text: Copyright 2026 Royal Chair Barber and Beauty Salon. All rights reserved.
+          - text: Website design & development by Yehor Kachur.

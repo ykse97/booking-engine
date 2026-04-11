@@ -138,7 +138,7 @@
 }
 
 #services .glass-card,
-#barbers .glass-card {
+#employees .glass-card {
     background:
         radial-gradient(circle at top left, rgba(255, 255, 255, 0.07), transparent 30%),
         radial-gradient(circle at bottom right, rgba(244, 220, 169, 0.05), transparent 28%),
@@ -158,7 +158,7 @@
 }
 
 #services .glass-card:hover,
-#barbers .glass-card:hover {
+#employees .glass-card:hover {
     border-color: rgba(244, 220, 169, 0.2);
     box-shadow:
         0 26px 58px rgba(0, 0, 0, 0.3),
@@ -178,13 +178,13 @@
 }
 
 #services .glass-card>div:first-child,
-#barbers .glass-card>div:first-child {
+#employees .glass-card>div:first-child {
     position: relative;
     box-shadow: inset 0 -38px 70px rgba(0, 0, 0, 0.22);
 }
 
 #services .glass-card>div:first-child::after,
-#barbers .glass-card>div:first-child::after {
+#employees .glass-card>div:first-child::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -194,7 +194,7 @@
     pointer-events: none;
 }
 
-#barbers .glass-card p[class*="rounded-full"] {
+#employees .glass-card p[class*="rounded-full"] {
     color: #fff7ef;
     border-color: rgba(255, 255, 255, 0.1);
     background:
@@ -205,27 +205,27 @@
         0 10px 18px rgba(0, 0, 0, 0.14);
 }
 
-#barbers .glass-card h3 {
+#employees .glass-card h3 {
     text-shadow:
         0 0 18px rgba(255, 255, 255, 0.025),
         0 12px 22px rgba(0, 0, 0, 0.26);
 }
 
-#barbers .barbers-grid-shell {
+#employees .employees-grid-shell {
     width: 100%;
 }
 
-#barbers .barbers-grid {
+#employees .employees-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
 }
 
-#barbers .barbers-card-shell {
+#employees .employees-card-shell {
     min-width: 0;
 }
 
-#barbers .barbers-card {
+#employees .employees-card {
     height: 100%;
 }
 
@@ -465,7 +465,7 @@
         font-size: 1.05rem;
     }
 
-    #barbers .barbers-grid {
+    #employees .employees-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1.5rem;
     }
@@ -511,26 +511,26 @@
         font-size: 16px;
     }
 
-    #barbers .barbers-grid {
+    #employees .employees-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    #barbers .barbers-grid--remainder-1 > :last-child {
+    #employees .employees-grid--remainder-1 > :last-child {
         grid-column: 2;
     }
 
-    #barbers .barbers-grid--remainder-2 > :last-child {
+    #employees .employees-grid--remainder-2 > :last-child {
         grid-column: 3;
     }
 
-    #barbers .barbers-grid-shell--breakout {
+    #employees .employees-grid-shell--breakout {
         position: relative;
         left: 50%;
         width: 100vw;
         margin-left: -50vw;
     }
 
-    #barbers .barbers-grid-shell--breakout .barbers-grid {
+    #employees .employees-grid-shell--breakout .employees-grid {
         max-width: min(100vw - 3rem, 96rem);
         margin: 0 auto;
         padding-inline: 1.5rem;
@@ -560,11 +560,11 @@
         max-width: calc((100% - 64px) / 3);
     }
 
-    #barbers .barbers-grid {
+    #employees .employees-grid {
         gap: 1.75rem;
     }
 
-    #barbers .barbers-grid-shell--breakout .barbers-grid {
+    #employees .employees-grid-shell--breakout .employees-grid {
         max-width: min(100vw - 4rem, 100rem);
         padding-inline: 2rem;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -609,7 +609,7 @@ html[data-theme='light'] .service-card-image {
 
 html[data-theme='light'] .service-card-title,
 html[data-theme='light'] #services .glass-card h3,
-html[data-theme='light'] #barbers .glass-card h3 {
+html[data-theme='light'] #employees .glass-card h3 {
     color: #24170d;
     text-shadow:
         0 0 16px rgba(255, 255, 255, 0.34),
@@ -658,7 +658,7 @@ html[data-theme='light'] .services-intro h1 {
 }
 
 html[data-theme='light'] #services .glass-card,
-html[data-theme='light'] #barbers .glass-card {
+html[data-theme='light'] #employees .glass-card {
     background:
         radial-gradient(circle at top left, rgba(255, 255, 255, 0.88), transparent 30%),
         radial-gradient(circle at bottom right, rgba(195, 156, 103, 0.12), transparent 28%),
@@ -670,7 +670,7 @@ html[data-theme='light'] #barbers .glass-card {
 }
 
 html[data-theme='light'] #services .glass-card:hover,
-html[data-theme='light'] #barbers .glass-card:hover {
+html[data-theme='light'] #employees .glass-card:hover {
     border-color: rgba(149, 95, 35, 0.22);
     box-shadow:
         0 26px 54px rgba(148, 111, 67, 0.16),
@@ -690,18 +690,18 @@ html[data-theme='light'] #services .glass-card .flex.items-center.justify-betwee
 }
 
 html[data-theme='light'] #services .glass-card > div:first-child,
-html[data-theme='light'] #barbers .glass-card > div:first-child {
+html[data-theme='light'] #employees .glass-card > div:first-child {
     box-shadow: inset 0 -28px 48px rgba(84, 57, 30, 0.1);
 }
 
 html[data-theme='light'] #services .glass-card > div:first-child::after,
-html[data-theme='light'] #barbers .glass-card > div:first-child::after {
+html[data-theme='light'] #employees .glass-card > div:first-child::after {
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 34%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(173, 132, 88, 0.12));
 }
 
-html[data-theme='light'] #barbers .glass-card p[class*='rounded-full'] {
+html[data-theme='light'] #employees .glass-card p[class*='rounded-full'] {
     color: #55351d;
     border-color: rgba(149, 95, 35, 0.16);
     background:

@@ -5,7 +5,8 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 /**
- * Service contract for Stripe PaymentIntent operations.
+ * Service contract for stripe payment operations.
+ * Defines stripe payment related business operations.
  *
  * @author Yehor
  * @version 1.0

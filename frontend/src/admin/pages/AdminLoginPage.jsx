@@ -21,7 +21,7 @@ export default function AdminLoginPage({
             <section className="panel panel-narrow admin-login-card">
                 <SectionTitle title="Admin Access" subtitle="Royal Chair Control" />
                 <p className="panel-note admin-login-copy">
-                    Sign in to manage barbers, treatments, salon schedule, and free phone bookings.
+                    Sign in to manage employees, treatments, salon schedule, and free phone bookings.
                 </p>
 
                 <form onSubmit={onSubmit} className="grid">
@@ -29,6 +29,8 @@ export default function AdminLoginPage({
                         Username
                         <input
                             className="payment-input"
+                            name="username"
+                            autoComplete="username"
                             value={loginForm.username}
                             onChange={(event) => {
                                 setLoginForm((current) => ({ ...current, username: event.target.value }));
@@ -42,7 +44,9 @@ export default function AdminLoginPage({
                         Password
                         <input
                             className="payment-input"
+                            name="current-password"
                             type="password"
+                            autoComplete="current-password"
                             value={loginForm.password}
                             onChange={(event) => {
                                 setLoginForm((current) => ({ ...current, password: event.target.value }));

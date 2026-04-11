@@ -29,9 +29,9 @@ public class BookingResponseDto {
     // ---------------------- IDs ----------------------
 
     private UUID id;
-    private UUID barberId;
+    private UUID employeeId;
     private UUID treatmentId;
-    private String barberName;
+    private String employeeName;
     private String treatmentName;
 
     // ---------------------- Slot ----------------------

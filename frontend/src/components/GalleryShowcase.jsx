@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionTitle from './ui/SectionTitle';
 import GoldButton from './ui/GoldButton';
+import { preparePendingNavigation } from '../utils/navigation';
 import { gallery } from '../data/gallery';
 
 const TWEEN_FACTOR_BASE = 0.26;
@@ -203,7 +204,7 @@ export default function GalleryShowcase({
                                             alt={item.alt}
                                             loading={index < 3 ? 'eager' : 'lazy'}
                                             decoding="async"
-                                            fetchPriority={index === 0 ? 'high' : 'low'}
+                                            fetchpriority={index === 0 ? 'high' : 'low'}
                                             className="gallery-embla__image"
                                         />
                                     </span>
@@ -236,7 +237,14 @@ export default function GalleryShowcase({
 
             {showBookingButton ? (
                 <div className="mt-6 flex justify-center">
-                    <GoldButton onClick={() => navigate('/booking')}>Book Appointment</GoldButton>
+                    <GoldButton
+                        onClick={() => {
+                            preparePendingNavigation('/booking', null);
+                            navigate('/booking');
+                        }}
+                    >
+                        Book Appointment
+                    </GoldButton>
                 </div>
             ) : null}
         </section>

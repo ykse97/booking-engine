@@ -36,7 +36,7 @@ public class TreatmentController {
      */
     @GetMapping
     public List<TreatmentResponseDto> getAllTreatments() {
-        log.info("HTTP GET /api/v1/public/treatments");
+        log.info("event=http_request method=GET path=/api/v1/public/treatments");
         return treatmentService.getAllTreatments();
     }
 
@@ -48,7 +48,7 @@ public class TreatmentController {
      */
     @GetMapping("/{id}")
     public TreatmentResponseDto getTreatmentById(@PathVariable UUID id) {
-        log.info("HTTP GET /api/v1/public/treatments/{}", id);
+        log.info("event=http_request method=GET path=/api/v1/public/treatments/{id} treatmentId={}", id);
         return treatmentService.getTreatmentById(id);
     }
 }

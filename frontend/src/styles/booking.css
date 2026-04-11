@@ -160,33 +160,6 @@
         0 12px 24px rgba(0, 0, 0, 0.14);
 }
 
-.booking-success-banner {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 20px;
-    border-radius: 22px;
-    background:
-        linear-gradient(180deg, rgba(28, 63, 41, 0.96), rgba(19, 43, 29, 0.94));
-    border: 1px solid rgba(148, 209, 154, 0.18);
-    box-shadow:
-        0 18px 34px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(225, 255, 232, 0.05);
-    color: #bbefc2;
-}
-
-.booking-success-banner strong,
-.booking-success-banner span {
-    display: block;
-}
-
-.booking-success-banner span {
-    margin-top: 4px;
-    color: #e3f6e4;
-    line-height: 1.65;
-}
-
 .booking-success-backdrop {
     position: fixed;
     inset: var(--site-header-height) 0 0;
@@ -384,7 +357,7 @@
     background: rgba(7, 7, 7, 0.95);
 }
 
-.booking-choice-media-barber {
+.booking-choice-media-employee {
     aspect-ratio: 4 / 3;
 }
 
@@ -526,11 +499,20 @@
     font-size: 0.94rem;
 }
 
+.booking-inline-note span {
+    min-width: 0;
+}
+
 .booking-form-actions {
     display: flex;
     justify-content: space-between;
     gap: 16px;
     margin-top: 24px;
+}
+
+.booking-form-actions>* {
+    flex: 1 1 220px;
+    min-width: 0;
 }
 
 .booking-hold-banner {
@@ -635,6 +617,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 14px;
+    min-width: 0;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -648,14 +631,19 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
     color: #cec4b7;
     font-size: 0.92rem;
+    line-height: 1.5;
 }
 
 .booking-summary-list strong {
     color: #fff8ef;
     font-size: 0.96rem;
     text-align: right;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .booking-note-list {
@@ -692,6 +680,7 @@
 .booking-confirm-consent-copy {
     display: grid;
     gap: 6px;
+    min-width: 0;
 }
 
 .booking-confirm-consent-text {
@@ -758,6 +747,7 @@
     padding: 14px 16px;
     border-radius: 16px;
     line-height: 1.7;
+    overflow-wrap: anywhere;
 }
 
 .booking-status-card-error {
@@ -954,26 +944,6 @@
     box-shadow: none;
 }
 
-.stripe-payment-ready {
-    display: grid;
-    gap: 8px;
-    padding: 16px 18px;
-    border-radius: 18px;
-    border: 1px solid rgba(148, 209, 154, 0.22);
-    background:
-        linear-gradient(180deg, rgba(29, 69, 44, 0.76), rgba(19, 46, 31, 0.74));
-    color: #d8f5dc;
-}
-
-.stripe-payment-ready strong {
-    color: #f1fff3;
-    font-size: 0.96rem;
-}
-
-.stripe-payment-ready span {
-    line-height: 1.7;
-}
-
 .booking-feature-chip svg,
 .booking-inline-note svg,
 .booking-summary-list span svg,
@@ -983,9 +953,44 @@
     color: #ffffff;
 }
 
-.booking-date-panel .flex.items-center.justify-between,
-.booking-date-panel .grid.grid-cols-7 {
-    color: rgba(255, 255, 255, 0.68);
+.booking-page-shell .booking-calendar-shell {
+    --calendar-nav-color: rgba(255, 255, 255, 0.88);
+    --calendar-nav-border: rgba(255, 255, 255, 0.1);
+    --calendar-nav-hover-border: rgba(255, 255, 255, 0.3);
+    --calendar-title-color: #fff8ef;
+    --calendar-weekday-color: rgba(255, 255, 255, 0.68);
+    --calendar-gap: 0.38rem;
+    width: min(100%, 330px);
+    margin-inline: auto;
+    padding: 18px 18px 20px;
+}
+
+.booking-page-shell .calendar-header {
+    margin-bottom: 0.9rem;
+}
+
+.booking-page-shell .calendar-weekdays {
+    align-items: center;
+    color: var(--calendar-weekday-color);
+    justify-items: center;
+    margin-bottom: 0.85rem;
+}
+
+.booking-page-shell .calendar-weekday {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 0.9rem;
+    color: var(--calendar-weekday-color);
+    line-height: 1;
+    opacity: 1;
+    white-space: nowrap;
+}
+
+.booking-page-shell .calendar-grid {
+    justify-items: stretch;
 }
 
 .booking-date-panel .flex.items-center.justify-between button:not(.calendar-day) {
@@ -1172,6 +1177,11 @@
         padding: 24px 12px 56px;
     }
 
+    .booking-page-shell .booking-calendar-shell {
+        width: min(100%, 314px);
+        padding: 18px 16px 18px;
+    }
+
     .booking-hero-panel {
         width: 100%;
         padding: 22px 14px;
@@ -1215,13 +1225,60 @@
         padding: 11px 14px;
     }
 
+    .booking-step-navigation {
+        display: flex;
+        justify-content: center;
+    }
+
     .booking-step-navigation-dual {
-        grid-template-columns: 1fr;
-        justify-content: stretch;
+        grid-template-columns: minmax(0, 220px);
+        justify-content: center;
+        gap: 12px;
     }
 
     .booking-step-navigation-button {
-        max-width: none;
+        width: min(100%, 220px);
+        max-width: 220px;
+        justify-self: center;
+    }
+
+    .booking-choice-meta {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .booking-form-panel {
+        padding: 18px;
+    }
+
+    .booking-inline-note {
+        gap: 12px;
+    }
+
+    .booking-summary-list div {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .booking-summary-list strong {
+        text-align: left;
+    }
+
+    .booking-confirm-consent {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .booking-form-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .booking-form-actions>* {
+        flex: 0 0 auto;
+        width: min(100%, 220px);
     }
 
     .booking-success-backdrop {
@@ -1263,6 +1320,7 @@
     }
 
     .stripe-modal-actions {
+        grid-template-columns: 1fr;
         gap: 12px;
     }
 
@@ -1289,7 +1347,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .booking-card-grid-barbers {
+    .booking-card-grid-employees {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
@@ -1301,6 +1359,35 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+    .booking-card-grid-employees {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .booking-datetime-grid {
+        grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .booking-date-panel,
+    .booking-time-panel,
+    .booking-time-slot-card {
+        width: 100%;
+    }
+
+    .time-slot-list-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .booking-summary-mobile {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -1505,12 +1592,14 @@ html[data-theme='light'] .booking-choice-card-active .booking-choice-media-overl
 }
 
 html[data-theme='light'] .booking-choice-selected-badge {
-    border-color: rgba(24, 24, 24, 0.12);
-    background: rgba(18, 18, 18, 0.94);
-    color: #ffffff;
+    border-color: rgba(36, 23, 13, 0.18);
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.84), transparent 38%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.98), rgba(243, 234, 223, 0.94));
+    color: #24170d;
     box-shadow:
-        0 10px 20px rgba(0, 0, 0, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        0 10px 20px rgba(148, 111, 67, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 html[data-theme='light'] .booking-choice-meta,
@@ -1750,17 +1839,18 @@ html[data-theme='light'] .stripe-modal-card .btn-gold:disabled {
 
 html[data-theme='light'] .booking-page-shell .step-circle.active {
     background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 38%),
-        linear-gradient(180deg, rgba(20, 20, 20, 0.98), rgba(8, 8, 8, 0.95));
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.16);
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.92), transparent 38%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.99), rgba(239, 229, 215, 0.96));
+    color: #24170d;
+    border-color: rgba(36, 23, 13, 0.38);
     box-shadow:
-        0 16px 28px rgba(0, 0, 0, 0.18),
-        0 0 18px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        0 0 0 1px rgba(36, 23, 13, 0.08),
+        0 16px 28px rgba(148, 111, 67, 0.14),
+        0 0 18px rgba(196, 153, 95, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-html[data-theme='light'] .booking-page-shell .step-circle.active + span {
+html[data-theme='light'] .booking-page-shell .step-circle.active+span {
     color: #24170d;
 }
 
@@ -1771,8 +1861,7 @@ html[data-theme='light'] .booking-page-shell .time-slot:hover:not(:disabled) {
 
 html[data-theme='light'] .booking-page-shell .time-slot,
 html[data-theme='light'] .booking-page-shell .calendar-day,
-html[data-theme='light'] .booking-page-shell .payment-input,
-html[data-theme='light'] .booking-page-shell .tab-pill {
+html[data-theme='light'] .booking-page-shell .payment-input {
     color: #24170d;
     border-color: rgba(149, 95, 35, 0.12);
     background:
@@ -1783,7 +1872,25 @@ html[data-theme='light'] .booking-page-shell .tab-pill {
         0 10px 18px rgba(148, 111, 67, 0.08);
 }
 
-html[data-theme='light'] .booking-page-shell .tab-pill.active,
+html[data-theme='light'] .booking-page-shell .booking-calendar-shell {
+    --calendar-nav-color: #24170d;
+    --calendar-nav-border: rgba(149, 95, 35, 0.12);
+    --calendar-nav-background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.82), transparent 38%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.96), rgba(243, 234, 223, 0.93));
+    --calendar-nav-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 10px 18px rgba(148, 111, 67, 0.08);
+    --calendar-nav-hover-border: rgba(149, 95, 35, 0.24);
+    --calendar-title-color: #24170d;
+    --calendar-weekday-color: rgba(98, 69, 39, 0.76);
+}
+
+html[data-theme='light'] .booking-page-shell .calendar-weekdays,
+html[data-theme='light'] .booking-page-shell .calendar-weekday {
+    color: rgba(70, 48, 26, 0.78);
+}
+
 html[data-theme='light'] .booking-page-shell .calendar-day.active {
     background: linear-gradient(180deg, #f2d79f 0%, #d8af66 48%, #a97531 100%);
     border-color: rgba(149, 95, 35, 0.18);
@@ -1797,26 +1904,26 @@ html[data-theme='light'] .booking-page-shell .calendar-day.active {
 
 html[data-theme='light'] .booking-page-shell .calendar-day.active {
     background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.07), transparent 38%),
-        linear-gradient(180deg, rgba(20, 20, 20, 0.98), rgba(8, 8, 8, 0.95));
-    border-color: rgba(255, 255, 255, 0.18);
-    color: #fff8ef;
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.82), transparent 38%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.98), rgba(243, 234, 223, 0.95));
+    border-color: rgba(36, 23, 13, 0.46);
+    color: #24170d;
     box-shadow:
-        0 18px 36px rgba(0, 0, 0, 0.24),
-        0 0 18px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        0 0 0 1px rgba(36, 23, 13, 0.08),
+        0 12px 22px rgba(148, 111, 67, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 html[data-theme='light'] .booking-page-shell .time-slot.time-slot-selected {
     background:
-        radial-gradient(circle at top, rgba(255, 255, 255, 0.07), transparent 38%),
-        linear-gradient(180deg, rgba(20, 20, 20, 0.98), rgba(8, 8, 8, 0.95));
-    border-color: rgba(255, 255, 255, 0.18);
-    color: #fff8ef;
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.82), transparent 38%),
+        linear-gradient(180deg, rgba(255, 251, 246, 0.98), rgba(243, 234, 223, 0.95));
+    border-color: rgba(36, 23, 13, 0.46);
+    color: #24170d;
     box-shadow:
-        0 18px 36px rgba(0, 0, 0, 0.24),
-        0 0 18px rgba(0, 0, 0, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 0 0 1px rgba(36, 23, 13, 0.08),
+        0 12px 22px rgba(148, 111, 67, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 html[data-theme='light'] .booking-page-shell .time-slot.booked {
@@ -1832,9 +1939,10 @@ html[data-theme='light'] .booking-page-shell .time-slot.time-slot-break {
 }
 
 html[data-theme='light'] .booking-page-shell .time-slot-selected-badge {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff8ef;
+    border-color: rgba(36, 23, 13, 0.18);
+    background: rgba(255, 255, 255, 0.76);
+    color: #24170d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 html[data-theme='light'] .booking-page-shell .payment-input::placeholder {

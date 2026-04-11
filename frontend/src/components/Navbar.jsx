@@ -4,23 +4,27 @@ import { FaInstagram, FaTiktok } from 'react-icons/fa';
 import { Menu, Moon, Sun, X } from 'lucide-react';
 import SectionLink from './SectionLink';
 import {
+    cancelActiveScrollSequence,
     scrollWindowToElement,
     scrollWindowToTop,
     setAutoScrollHidden,
     setSiteHeaderHeight
 } from '../utils/scroll';
+import {
+    PENDING_SCROLL_KEY,
+    SECTION_SCROLL_PENDING_CLASS,
+    preparePendingNavigation
+} from '../utils/navigation';
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import { useColorScheme } from '../context/ColorSchemeContext';
-
-const PENDING_SCROLL_KEY = 'pending-section-scroll';
-const SECTION_SCROLL_PENDING_CLASS = 'section-scroll-pending';
-const MOBILE_FORCE_SCROLL_TOP_KEY = 'mobile-force-scroll-top';
+import { getThemeLogoPath } from '../utils/themeAssets';
 
 export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const headerRef = useRef(null);
     const pendingMobileActionRef = useRef(null);
     const { colorScheme, isDarkMode, toggleColorScheme } = useColorScheme();
+    const logoPath = getThemeLogoPath(colorScheme);
     const location = useLocation();
     const navigate = useNavigate();
     useBodyScrollLock(mobileMenuOpen);
@@ -106,8 +110,76 @@ export default function Navbar() {
         }
     }
 
+    function navigateToRouteTop(path) {
+        cancelActiveScrollSequence();
+
+        if (location.pathname === path) {
+            scrollWindowToTop({
+                behavior: 'smooth',
+                hideScrollbar: true
+            });
+            return;
+        }
+
+        preparePendingNavigation(path, null);
+        navigate(path);
+    }
+
+    function repeatMobileScrollToTop() {
+        cancelActiveScrollSequence();
+
+        scrollWindowToTop({
+            behavior: 'instant',
+            hideScrollbar: true
+        });
+
+        window.requestAnimationFrame(() => {
+            scrollWindowToTop({
+                behavior: 'instant',
+                hideScrollbar: true
+            });
+        });
+
+        window.setTimeout(() => {
+            scrollWindowToTop({
+                behavior: 'instant',
+                hideScrollbar: true
+            });
+        }, 90);
+    }
+
+    function repeatMobileScrollToElement(element) {
+        cancelActiveScrollSequence();
+
+        if (!element) {
+            repeatMobileScrollToTop();
+            return;
+        }
+
+        const scrollToTarget = () => {
+            scrollWindowToElement(element, {
+                behavior: 'instant',
+                extraOffset: 16,
+                hideScrollbar: true
+            });
+        };
+
+        scrollToTarget();
+
+        window.requestAnimationFrame(() => {
+            scrollToTarget();
+        });
+
+        window.setTimeout(() => {
+            scrollToTarget();
+        }, 90);
+    }
+
     function handleMobileRouteNavigation(path) {
         runAfterMobileMenuCloses(() => {
+            cancelActiveScrollSequence();
+            clearPendingSectionScroll();
+
             if (location.pathname === path) {
                 scrollWindowToTop({
                     behavior: 'smooth',
@@ -116,49 +188,28 @@ export default function Navbar() {
                 return;
             }
 
-            clearPendingSectionScroll();
-            sessionStorage.setItem(
-                MOBILE_FORCE_SCROLL_TOP_KEY,
-                JSON.stringify({
-                    path,
-                    ts: Date.now()
-                })
-            );
-            scrollWindowToTop({ behavior: 'auto' });
+            preparePendingNavigation(path, null);
             navigate(path);
-
-            window.setTimeout(() => {
-                scrollWindowToTop({ behavior: 'auto' });
-            }, 0);
         });
     }
 
     function handleMobileSectionNavigation(sectionId, fallbackPath = '/') {
         runAfterMobileMenuCloses(() => {
+            cancelActiveScrollSequence();
             const isSamePage = location.pathname === fallbackPath;
 
             if (isSamePage) {
                 if (!sectionId) {
-                    scrollWindowToTop({
-                        behavior: 'smooth',
-                        hideScrollbar: true
-                    });
+                    repeatMobileScrollToTop();
                     return;
                 }
 
                 const target = document.getElementById(sectionId);
 
                 if (target) {
-                    scrollWindowToElement(target, {
-                        behavior: 'smooth',
-                        extraOffset: 16,
-                        hideScrollbar: true
-                    });
+                    repeatMobileScrollToElement(target);
                 } else {
-                    scrollWindowToTop({
-                        behavior: 'smooth',
-                        hideScrollbar: true
-                    });
+                    repeatMobileScrollToTop();
                 }
 
                 return;
@@ -201,21 +252,30 @@ export default function Navbar() {
         const action = pendingMobileActionRef.current;
         pendingMobileActionRef.current = null;
 
-        const frameId = window.requestAnimationFrame(() => {
+        const timeoutId = window.setTimeout(() => {
             action();
-        });
+        }, 40);
 
         return () => {
-            window.cancelAnimationFrame(frameId);
+            window.clearTimeout(timeoutId);
         };
     }, [mobileMenuOpen]);
 
     function renderNavItem(item, className = 'nav-link', onClick) {
         if (item.type === 'route') {
             return (
-                <Link key={item.label} to={item.to} className={className} onClick={onClick}>
+                <a
+                    key={item.label}
+                    href={item.to}
+                    className={className}
+                    onClick={(event) => {
+                        event.preventDefault();
+                        onClick?.();
+                        navigateToRouteTop(item.to);
+                    }}
+                >
                     {item.label}
-                </Link>
+                </a>
             );
         }
 
@@ -261,16 +321,23 @@ export default function Navbar() {
                             {navItemsLeft.map((item) => renderNavItem(item))}
                         </div>
 
-                        <Link to="/" className="flex justify-center">
+                        <Link
+                            to="/"
+                            className="flex justify-center"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                navigateToRouteTop('/');
+                            }}
+                        >
                             <div className="nav-logo-wrap">
                                 <img
-                                    src="/logo-royal.jpg"
+                                    src={logoPath}
                                     alt="Royal Chair logo"
                                     width="320"
                                     height="320"
                                     loading="eager"
                                     decoding="async"
-                                    fetchPriority="high"
+                                    fetchpriority="high"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -318,13 +385,13 @@ export default function Navbar() {
                         >
                             <div className="nav-logo-wrap nav-logo-mobile">
                                 <img
-                                    src="/logo-royal.jpg"
+                                    src={logoPath}
                                     alt="Royal Chair logo"
                                     width="320"
                                     height="320"
                                     loading="eager"
                                     decoding="async"
-                                    fetchPriority="high"
+                                    fetchpriority="high"
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -365,13 +432,13 @@ export default function Navbar() {
                         >
                             <div className="nav-logo-wrap nav-logo-mobile-menu">
                                 <img
-                                    src="/logo-royal.jpg"
+                                    src={logoPath}
                                     alt="Royal Chair logo"
                                     width="320"
                                     height="320"
                                     loading="lazy"
                                     decoding="async"
-                                    fetchPriority="low"
+                                    fetchpriority="low"
                                     className="w-full h-full object-cover"
                                 />
                             </div>

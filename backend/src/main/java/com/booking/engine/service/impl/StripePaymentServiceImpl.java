@@ -3,6 +3,8 @@ package com.booking.engine.service.impl;
 import com.booking.engine.dto.BookingCheckoutSessionResponseDto;
 import com.booking.engine.exception.PaymentProcessingException;
 import com.booking.engine.properties.StripeProperties;
+import com.booking.engine.security.SecurityAuditLogger;
+import com.booking.engine.security.SensitiveLogSanitizer;
 import com.booking.engine.service.StripePaymentService;
 import com.booking.engine.stripe.StripeClient;
 import com.stripe.exception.StripeException;
@@ -10,14 +12,14 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Stripe payment service implementation based on PaymentIntent API.
- * Charges the booking amount immediately and keeps booking review on the
- * application side.
+ * Implementation of {@link StripePaymentService}.
+ * Provides stripe payment related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -28,13 +30,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StripePaymentServiceImpl implements StripePaymentService {
 
+    // ---------------------- Constants ----------------------
+
+    private static final String PAYMENT_FAILURE_MESSAGE = "Payment could not be completed. Please try again or use a different payment method.";
+    private static final String PAYMENT_STATUS_UNAVAILABLE_MESSAGE = "Unable to verify payment status right now. Please try again.";
+
     // ---------------------- Properties ----------------------
 
     private final StripeProperties stripeProperties;
 
-    // ---------------------- Clients ----------------------
+    // ---------------------- Services ----------------------
 
     private final StripeClient stripeClient;
+
+    private final SecurityAuditLogger securityAuditLogger;
 
     // ---------------------- Public Methods ----------------------
 
@@ -48,21 +57,24 @@ public class StripePaymentServiceImpl implements StripePaymentService {
             String confirmationTokenId,
             Map<String, String> metadata) {
         try {
-            log.info("STRIPE_RUNTIME_CONFIRMATION_TOKEN_RECEIVED confirmationTokenIdPrefix={}, amount={}, customerEmail={}, metadata={}",
-                    confirmationTokenId != null && confirmationTokenId.length() > 8
-                            ? confirmationTokenId.substring(0, 8)
-                            : confirmationTokenId,
+            log.info(
+                    "event=stripe_payment_create action=confirmation_token_received confirmationTokenPresent={} amount={} customerEmailMask={} metadataKeys={}",
+                    confirmationTokenId != null && !confirmationTokenId.isBlank(),
                     amount,
-                    customerEmail,
-                    metadata);
+                    securityAuditLogger.maskEmail(customerEmail),
+                    summarizeMetadataKeys(metadata));
             PaymentIntentCreateParams params = cardPaymentIntentParams(amount, customerEmail, metadata)
                     .setConfirm(true)
                     .setConfirmationToken(confirmationTokenId)
                     .build();
             PaymentIntent intent = stripeClient.createPaymentIntent(params);
 
-            log.info("Stripe booking payment created via confirmation token paymentIntentId={}, amount={}, currency={}, status={}",
-                    intent.getId(), amount, stripeProperties.getCurrency(), intent.getStatus());
+            log.info(
+                    "event=stripe_payment_create action=confirmation_token_success paymentIntentHash={} amount={} currency={} paymentStatus={}",
+                    hashPaymentIntentForLogs(intent.getId()),
+                    amount,
+                    stripeProperties.getCurrency(),
+                    intent.getStatus());
 
             return BookingCheckoutSessionResponseDto.builder()
                     .paymentIntentId(intent.getId())
@@ -73,8 +85,13 @@ public class StripePaymentServiceImpl implements StripePaymentService {
             String details = ex.getStripeError() != null && ex.getStripeError().getMessage() != null
                     ? ex.getStripeError().getMessage()
                     : ex.getMessage();
-            log.warn("Stripe payment via confirmation token failed: {}", details);
-            throw new PaymentProcessingException("Stripe payment failed: " + details, ex);
+            log.warn("event=stripe_payment_create outcome=confirmation_token_failed reason={} details={}",
+                    ex.getClass().getSimpleName(),
+                    sanitizeLogDetails(details));
+            throw new PaymentProcessingException(
+                    PAYMENT_FAILURE_MESSAGE,
+                    "Stripe payment via confirmation token failed: " + details,
+                    ex);
         }
     }
 
@@ -96,20 +113,28 @@ public class StripePaymentServiceImpl implements StripePaymentService {
             PaymentIntent intent = stripeClient.createPaymentIntent(params);
 
             if (!"succeeded".equals(intent.getStatus())) {
-                throw new PaymentProcessingException(
-                        "Stripe payment was not completed. PaymentIntent status: " + intent.getStatus());
+                log.warn(
+                        "event=stripe_payment_create outcome=unexpected_status paymentIntentHash={} paymentStatus={}",
+                        hashPaymentIntentForLogs(intent.getId()),
+                        intent.getStatus());
+                throw new PaymentProcessingException(PAYMENT_FAILURE_MESSAGE);
             }
 
-            log.info("Stripe booking payment created paymentIntentId={}, amount={}, currency={}",
-                    intent.getId(), amount, stripeProperties.getCurrency());
+            log.info("event=stripe_payment_create action=direct_success paymentIntentHash={} amount={} currency={}",
+                    hashPaymentIntentForLogs(intent.getId()), amount, stripeProperties.getCurrency());
 
             return intent.getId();
         } catch (StripeException ex) {
             String details = ex.getStripeError() != null && ex.getStripeError().getMessage() != null
                     ? ex.getStripeError().getMessage()
                     : ex.getMessage();
-            log.warn("Stripe payment request failed: {}", details);
-            throw new PaymentProcessingException("Stripe payment request failed: " + details, ex);
+            log.warn("event=stripe_payment_create outcome=direct_failed reason={} details={}",
+                    ex.getClass().getSimpleName(),
+                    sanitizeLogDetails(details));
+            throw new PaymentProcessingException(
+                    PAYMENT_FAILURE_MESSAGE,
+                    "Stripe payment request failed: " + details,
+                    ex);
         }
     }
 
@@ -125,7 +150,14 @@ public class StripePaymentServiceImpl implements StripePaymentService {
             String details = ex.getStripeError() != null && ex.getStripeError().getMessage() != null
                     ? ex.getStripeError().getMessage()
                     : ex.getMessage();
-            throw new PaymentProcessingException("Failed to retrieve Stripe PaymentIntent status: " + details, ex);
+            log.warn("event=stripe_payment_status_lookup outcome=failed paymentIntentHash={} reason={} details={}",
+                    hashPaymentIntentForLogs(paymentIntentId),
+                    ex.getClass().getSimpleName(),
+                    sanitizeLogDetails(details));
+            throw new PaymentProcessingException(
+                    PAYMENT_STATUS_UNAVAILABLE_MESSAGE,
+                    "Failed to retrieve Stripe PaymentIntent status: " + details,
+                    ex);
         }
     }
 
@@ -136,8 +168,11 @@ public class StripePaymentServiceImpl implements StripePaymentService {
      * to cents, currency, receipt email, description, and booking metadata.
      *
      * @param amount booking amount in major currency units
+     *
      * @param customerEmail customer receipt email
+     *
      * @param metadata Stripe metadata map
+     *
      * @return partially configured PaymentIntent builder
      */
     private PaymentIntentCreateParams.Builder basePaymentIntentParams(
@@ -159,8 +194,11 @@ public class StripePaymentServiceImpl implements StripePaymentService {
      * configuration used by the checkout flows in this application.
      *
      * @param amount booking amount in major currency units
+     *
      * @param customerEmail customer receipt email
+     *
      * @param metadata Stripe metadata map
+     *
      * @return card-enabled PaymentIntent builder
      */
     private PaymentIntentCreateParams.Builder cardPaymentIntentParams(
@@ -169,5 +207,26 @@ public class StripePaymentServiceImpl implements StripePaymentService {
             Map<String, String> metadata) {
         return basePaymentIntentParams(amount, customerEmail, metadata)
                 .addPaymentMethodType("card");
+    }
+
+    /**
+     * Builds a safe summary of Stripe metadata keys for logging.
+     */
+    private Set<String> summarizeMetadataKeys(Map<String, String> metadata) {
+        return metadata == null ? Set.of() : metadata.keySet();
+    }
+
+    /**
+     * Sanitizes Stripe error details before writing them to logs.
+     */
+    private String sanitizeLogDetails(String details) {
+        return SensitiveLogSanitizer.sanitizeForLogs(details);
+    }
+
+    /**
+     * Hashes a Stripe PaymentIntent identifier for operational logs.
+     */
+    private String hashPaymentIntentForLogs(String paymentIntentId) {
+        return SensitiveLogSanitizer.hashValue(paymentIntentId);
     }
 }

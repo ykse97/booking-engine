@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import GoldButton from './ui/GoldButton';
+import { preparePendingNavigation } from '../utils/navigation';
 import useHairSalonInfo from '../hooks/useHairSalonInfo';
 
 export default function Hero() {
@@ -20,6 +21,8 @@ export default function Hero() {
             <video
                 className="hero-media absolute inset-y-0 left-1/2 -translate-x-1/2 w-[100%] h-full object-cover bg-black"
                 src="/hero-bg.mp4"
+                preload="auto"
+                fetchpriority="high"
                 autoPlay
                 loop
                 muted
@@ -87,7 +90,12 @@ export default function Hero() {
                             transition={{ delay: 0.23 }}
                             className="hero-actions"
                         >
-                            <GoldButton onClick={() => navigate('/booking')}>
+                            <GoldButton
+                                onClick={() => {
+                                    preparePendingNavigation('/booking', null);
+                                    navigate('/booking');
+                                }}
+                            >
                                 Book Appointment
                             </GoldButton>
                         </motion.div>

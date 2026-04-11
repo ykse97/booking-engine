@@ -101,7 +101,7 @@ export default function ServicesSection({
                                             aria-hidden="true"
                                             loading={wide && idx < 2 ? 'eager' : 'lazy'}
                                             decoding="async"
-                                            fetchPriority={wide && idx === 0 ? 'high' : 'auto'}
+                                            fetchpriority={wide && idx === 0 ? 'high' : 'auto'}
                                             className="h-full w-full object-cover"
                                         />
                                         <div

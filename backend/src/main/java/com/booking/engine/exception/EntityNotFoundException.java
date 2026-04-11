@@ -15,7 +15,7 @@ public class EntityNotFoundException extends RuntimeException {
     /**
      * Constructs a new entity not found exception.
      *
-     * @param entityName the name of the entity (e.g., "Barber", "Treatment")
+     * @param entityName the name of the entity (e.g., "Employee", "Treatment")
      * @param id         the UUID that was not found
      */
     public EntityNotFoundException(String entityName, UUID id) {

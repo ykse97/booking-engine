@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link HairSalonHoursService}.
- * Manages hair salon working hours configuration.
+ * Provides hair salon hours related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -30,10 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class HairSalonHoursServiceImpl implements HairSalonHoursService {
-
     // ---------------------- Repositories ----------------------
 
     private final HairSalonRepository hairSalonRepository;
+
     private final HairSalonHoursRepository hoursRepository;
 
     // ---------------------- Mappers ----------------------
@@ -47,15 +47,22 @@ public class HairSalonHoursServiceImpl implements HairSalonHoursService {
      */
     @Override
     public List<HairSalonHoursResponseDto> getWorkingHours(UUID hairSalonId) {
-        log.info("Fetching working hours for hairSalonId={}", hairSalonId);
+        log.debug("event=hair_salon_hours_get action=start hairSalonId={}", hairSalonId);
 
         HairSalonEntity salon = hairSalonRepository.findById(hairSalonId)
-                .orElseThrow(() -> new EntityNotFoundException("HairSalon", hairSalonId));
+                .orElseThrow(() -> {
+                    log.warn("event=hair_salon_lookup outcome=not_found hairSalonId={}", hairSalonId);
+                    return new EntityNotFoundException("HairSalon", hairSalonId);
+                });
 
-        return salon.getWorkingHours()
+        List<HairSalonHoursResponseDto> workingHours = salon.getWorkingHours()
                 .stream()
                 .map(mapper::toDto)
                 .toList();
+        log.debug("event=hair_salon_hours_get action=success hairSalonId={} resultCount={}",
+                hairSalonId,
+                workingHours.size());
+        return workingHours;
     }
 
     /**
@@ -64,12 +71,18 @@ public class HairSalonHoursServiceImpl implements HairSalonHoursService {
     @Transactional
     @Override
     public void updateWorkingDay(UUID hairSalonId, DayOfWeek dayOfWeek, HairSalonHoursRequestDto request) {
-        log.info("Updating working hours: hairSalonId={}, day={}", hairSalonId, dayOfWeek);
+        log.info("event=hair_salon_hours_update action=start hairSalonId={} dayOfWeek={}", hairSalonId, dayOfWeek);
 
         HairSalonHoursEntity hours = hoursRepository
                 .findByHairSalonIdAndDayOfWeek(hairSalonId, dayOfWeek)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Working hours for salon " + hairSalonId + " on " + dayOfWeek));
+                .orElseThrow(() -> {
+                    log.warn(
+                            "event=hair_salon_hours_lookup outcome=not_found hairSalonId={} dayOfWeek={}",
+                            hairSalonId,
+                            dayOfWeek);
+                    return new EntityNotFoundException(
+                            "Working hours for salon " + hairSalonId + " on " + dayOfWeek);
+                });
 
         if (!request.getWorkingDay()) {
             setNonWorkingDay(hours, hairSalonId, dayOfWeek);
@@ -89,7 +102,9 @@ public class HairSalonHoursServiceImpl implements HairSalonHoursService {
         hours.setOpenTime(null);
         hours.setCloseTime(null);
 
-        log.info("Marked {} as non-working day for hairSalonId={}", dayOfWeek, hairSalonId);
+        log.info("event=hair_salon_hours_update action=set_non_working_day hairSalonId={} dayOfWeek={}",
+                hairSalonId,
+                dayOfWeek);
     }
 
     /*
@@ -103,7 +118,7 @@ public class HairSalonHoursServiceImpl implements HairSalonHoursService {
         hours.setOpenTime(request.getOpenTime());
         hours.setCloseTime(request.getCloseTime());
 
-        log.info("Working hours successfully updated: hairSalonId={}, day={}, open={}, close={}",
+        log.info("event=hair_salon_hours_update action=success hairSalonId={} dayOfWeek={} openTime={} closeTime={}",
                 hairSalonId, dayOfWeek, request.getOpenTime(), request.getCloseTime());
     }
 
@@ -111,6 +126,7 @@ public class HairSalonHoursServiceImpl implements HairSalonHoursService {
      * Validates working day times.
      *
      * @param request the request with times
+     *
      * @throws IllegalArgumentException if times are invalid
      */
     private void validateWorkingDayTimes(HairSalonHoursRequestDto request) {

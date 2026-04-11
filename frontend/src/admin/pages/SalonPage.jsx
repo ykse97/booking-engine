@@ -11,7 +11,9 @@ export default function SalonPage({
     sectionErrors,
     sectionSuccess,
     updateHairSalon,
-    updateSalonDay
+    updateSalonDay,
+    copyMondayHoursToWeekdays,
+    saveAllSalonHours
 }) {
     return (
         <div className="admin-page-stack">
@@ -92,6 +94,28 @@ export default function SalonPage({
 
             <section className="panel">
                 <SectionTitle title="Salon Working Hours" subtitle="Weekly Schedule" />
+                <p className="panel-note">
+                    Update individual days when needed, or use the bulk actions to roll Monday across weekdays and save every changed row in one pass.
+                </p>
+
+                <div className="row admin-form-actions admin-hours-toolbar">
+                    <button
+                        type="button"
+                        className="btn-gold"
+                        onClick={copyMondayHoursToWeekdays}
+                        disabled={loading || hairSalonHours.length === 0}
+                    >
+                        Copy Monday To Weekdays
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-gold"
+                        onClick={saveAllSalonHours}
+                        disabled={loading || hairSalonHours.length === 0}
+                    >
+                        Save All Changed Rows
+                    </button>
+                </div>
 
                 <div className="table-wrapper admin-table-shell">
                     <table className="admin-data-table admin-data-table-schedule">

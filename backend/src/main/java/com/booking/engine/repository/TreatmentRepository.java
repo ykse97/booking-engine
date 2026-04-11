@@ -4,6 +4,7 @@ import com.booking.engine.entity.TreatmentEntity;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -72,6 +73,14 @@ public interface TreatmentRepository extends JpaRepository<TreatmentEntity, UUID
      * @return optional treatment entity
      */
     Optional<TreatmentEntity> findByIdAndActiveTrue(UUID id);
+
+    /**
+     * Finds all active treatments by ids.
+     *
+     * @param ids treatment ids
+     * @return matching active treatments
+     */
+    List<TreatmentEntity> findAllByIdInAndActiveTrue(Set<UUID> ids);
 
     /**
      * Finds active treatment by id with pessimistic write lock.

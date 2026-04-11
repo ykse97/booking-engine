@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Response DTO for successful JWT authentication.
+ * Service DTO for successful admin login.
  *
  * @author Yehor
  * @version 1.0
@@ -18,8 +18,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginResponseDto {
 
+    private String username;
+
     private String accessToken;
-    private String tokenType;
+
     private long expiresInSeconds;
 }
-

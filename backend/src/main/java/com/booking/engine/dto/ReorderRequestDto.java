@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 /**
- * Request DTO for reordering entities as barbers, treatments.
+ * Request DTO for reordering entities as employees, treatments.
  *
  * @author Yehor
  * @version 1.0

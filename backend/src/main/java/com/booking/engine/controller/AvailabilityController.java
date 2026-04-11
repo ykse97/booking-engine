@@ -27,10 +27,13 @@ public class AvailabilityController {
 
     @GetMapping
     public List<AvailabilitySlotDto> getAvailability(
-            @RequestParam UUID barberId,
+            @RequestParam UUID employeeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam UUID treatmentId) {
-        log.info("HTTP GET /api/v1/public/availability barberId={} date={} treatmentId={}", barberId, date, treatmentId);
-        return availabilityService.getAvailability(barberId, date, treatmentId);
+        log.info("event=http_request method=GET path=/api/v1/public/availability employeeId={} bookingDate={} treatmentId={}",
+                employeeId,
+                date,
+                treatmentId);
+        return availabilityService.getAvailability(employeeId, date, treatmentId);
     }
 }

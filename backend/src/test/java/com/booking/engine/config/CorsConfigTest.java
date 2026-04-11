@@ -20,7 +20,7 @@ class CorsConfigTest {
         CorsConfigurationSource source = config.corsConfigurationSource();
 
         CorsConfiguration apiConfiguration =
-                source.getCorsConfiguration(new MockHttpServletRequest("GET", "/api/v1/public/barbers"));
+                source.getCorsConfiguration(new MockHttpServletRequest("GET", "/api/v1/public/employees"));
         CorsConfiguration actuatorConfiguration =
                 source.getCorsConfiguration(new MockHttpServletRequest("GET", "/actuator/health"));
 
@@ -30,9 +30,15 @@ class CorsConfigTest {
         assertThat(apiConfiguration.getAllowedMethods())
                 .containsExactly("GET", "POST", "PUT", "DELETE", "OPTIONS");
         assertThat(apiConfiguration.getAllowedHeaders())
-                .containsExactly("Accept", "Authorization", "Content-Type", "Origin", "X-Booking-Device-Id");
+                .containsExactly(
+                        "Accept",
+                        "Authorization",
+                        "Content-Type",
+                        "Origin",
+                        "X-Booking-Device-Id",
+                        "X-Admin-Hold-Session-Id");
         assertThat(apiConfiguration.getExposedHeaders()).containsExactly("Location");
-        assertThat(apiConfiguration.getAllowCredentials()).isFalse();
+        assertThat(apiConfiguration.getAllowCredentials()).isTrue();
         assertThat(apiConfiguration.getMaxAge()).isEqualTo(3600L);
         assertThat(actuatorConfiguration).isNotNull();
     }
@@ -44,7 +50,7 @@ class CorsConfigTest {
 
         CorsConfiguration configuration =
                 config.corsConfigurationSource()
-                        .getCorsConfiguration(new MockHttpServletRequest("GET", "/api/v1/public/barbers"));
+                        .getCorsConfiguration(new MockHttpServletRequest("GET", "/api/v1/public/employees"));
 
         assertThat(configuration).isNotNull();
         assertThat(configuration.getAllowedOrigins()).isNull();

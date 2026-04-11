@@ -1,24 +1,18 @@
 package com.booking.engine.scheduler;
 
-import com.booking.engine.entity.BookingEntity;
-import com.booking.engine.entity.BookingStatus;
-import com.booking.engine.properties.BookingProperties;
-import com.booking.engine.repository.BookingRepository;
-import java.util.List;
+import com.booking.engine.service.BookingMaintenanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 /**
  * Scheduled task for booking status transitions.
  * Runs every 5 minutes to:
- * 1) expire pending bookings that were not confirmed in time;
- * 2) complete confirmed bookings whose end time is in the past.
+ * 1) reconcile paid pending bookings into confirmed state;
+ * 2) expire unpaid pending bookings that were not confirmed in time;
+ * 3) complete confirmed bookings whose end time is in the past.
+ * 4) physically delete old bookings older than two weeks.
  *
  * @author Yehor
  * @version 1.0
@@ -29,41 +23,14 @@ import java.time.ZoneId;
 @RequiredArgsConstructor
 public class BookingExpirationScheduler {
 
-    private final BookingRepository bookingRepository;
-    private final BookingProperties bookingProperties;
+    private final BookingMaintenanceService bookingMaintenanceService;
 
     /**
      * Applies scheduled booking status transitions.
      * Executed every 5 minutes (300000 ms).
      */
-    @Scheduled(fixedDelay = 300000)
-    @Transactional
+    @Scheduled(cron = "0 */5 * * * *")
     public void updateBookingStatuses() {
-        LocalDateTime now = LocalDateTime.now(ZoneId.of(bookingProperties.getTimezone()));
-
-        List<BookingEntity> expiringBookings = bookingRepository.findByStatusAndExpiresAtBefore(
-                BookingStatus.PENDING,
-                now);
-
-        for (BookingEntity booking : expiringBookings) {
-            booking.setStatus(BookingStatus.EXPIRED);
-            booking.setExpiresAt(null);
-        }
-
-        if (!expiringBookings.isEmpty()) {
-            bookingRepository.saveAll(expiringBookings);
-        }
-
-        int expired = expiringBookings.size();
-
-        int completed = bookingRepository.completeConfirmedBookings(
-                now.toLocalDate(),
-                now.toLocalTime(),
-                BookingStatus.CONFIRMED,
-                BookingStatus.DONE);
-
-        if (expired > 0 || completed > 0) {
-            log.info("Scheduler updated bookings: expired={}, completed={}", expired, completed);
-        }
+        bookingMaintenanceService.updateBookingStatuses();
     }
 }

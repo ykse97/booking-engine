@@ -35,14 +35,14 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handlesEntityNotFound() {
-        EntityNotFoundException exception = new EntityNotFoundException("Barber", UUID.fromString("11111111-1111-1111-1111-111111111111"));
+        EntityNotFoundException exception = new EntityNotFoundException("Employee", UUID.fromString("11111111-1111-1111-1111-111111111111"));
 
         ErrorResponse response = handler.handleEntityNotFound(exception, request).getBody();
 
         assertThat(response).isNotNull();
         assertThat(response.status()).isEqualTo(404);
         assertThat(response.error()).isEqualTo("Not Found");
-        assertThat(response.message()).contains("Barber not found");
+        assertThat(response.message()).contains("Employee not found");
         assertThat(response.path()).isEqualTo("/api/v1/test");
     }
 
@@ -108,7 +108,11 @@ class GlobalExceptionHandlerTest {
         ErrorResponse bookingResponse = handler.handleBookingValidation(
                 new BookingValidationException("Slot is not available"), request).getBody();
         ErrorResponse paymentResponse = handler.handlePaymentProcessing(
-                new PaymentProcessingException("Payment capture failed"), request).getBody();
+                new PaymentProcessingException(
+                        "Payment could not be completed. Please try again.",
+                        "Stripe payment failed: provider detail",
+                        new RuntimeException("provider detail")),
+                request).getBody();
 
         assertThat(bookingResponse).isNotNull();
         assertThat(bookingResponse.error()).isEqualTo("Bad Request");
@@ -116,7 +120,8 @@ class GlobalExceptionHandlerTest {
 
         assertThat(paymentResponse).isNotNull();
         assertThat(paymentResponse.error()).isEqualTo("Bad Request");
-        assertThat(paymentResponse.message()).isEqualTo("Payment capture failed");
+        assertThat(paymentResponse.message()).isEqualTo("Payment could not be completed. Please try again.");
+        assertThat(paymentResponse.message()).doesNotContain("provider detail");
     }
 
     @Test
@@ -164,17 +169,50 @@ class GlobalExceptionHandlerTest {
         assertThat(authResponse).isNotNull();
         assertThat(authResponse.status()).isEqualTo(401);
         assertThat(authResponse.error()).isEqualTo("Unauthorized");
-        assertThat(authResponse.message()).isEqualTo("Invalid credentials");
+        assertThat(authResponse.message()).isEqualTo("Authentication failed");
 
         assertThat(accessDeniedResponse).isNotNull();
         assertThat(accessDeniedResponse.status()).isEqualTo(403);
         assertThat(accessDeniedResponse.error()).isEqualTo("Forbidden");
-        assertThat(accessDeniedResponse.message()).isEqualTo("Forbidden area");
+        assertThat(accessDeniedResponse.message()).isEqualTo("Forbidden");
 
         assertThat(genericResponse).isNotNull();
         assertThat(genericResponse.status()).isEqualTo(500);
         assertThat(genericResponse.error()).isEqualTo("Internal Server Error");
         assertThat(genericResponse.message()).isEqualTo("An unexpected error occurred");
+    }
+
+    @Test
+    void handlesLoginAuthenticationAndRateLimitWithNeutralMessages() {
+        MockHttpServletRequest loginRequest = new MockHttpServletRequest("POST", "/api/v1/public/auth/login");
+
+        ErrorResponse authResponse = handler.handleAuthentication(
+                new BadCredentialsException("Admin user not found: admin"), loginRequest).getBody();
+        ErrorResponse rateLimitResponse = handler.handleRateLimitExceeded(
+                new RateLimitExceededException("too many"), loginRequest).getBody();
+
+        assertThat(authResponse).isNotNull();
+        assertThat(authResponse.message()).isEqualTo("Invalid username or password");
+
+        assertThat(rateLimitResponse).isNotNull();
+        assertThat(rateLimitResponse.status()).isEqualTo(429);
+        assertThat(rateLimitResponse.error()).isEqualTo("Too Many Requests");
+        assertThat(rateLimitResponse.message()).isEqualTo("Too many login attempts. Please try again later.");
+    }
+
+    @Test
+    void sanitizeLogMessageRedactsCustomerContactData() throws Exception {
+        Method method = GlobalExceptionHandler.class.getDeclaredMethod("sanitizeLogMessage", String.class);
+        method.setAccessible(true);
+
+        String sanitized = (String) method.invoke(
+                handler,
+                "rejected value [john.doe@example.com] and phone [+353 87 123 4567]");
+
+        assertThat(sanitized).contains("[emailMask=j***e@example.com]");
+        assertThat(sanitized).contains("[phoneHash=");
+        assertThat(sanitized).doesNotContain("john.doe@example.com");
+        assertThat(sanitized).doesNotContain("+353 87 123 4567");
     }
 
     private void sampleValidatedMethod(Object ignored) {

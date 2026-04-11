@@ -40,7 +40,8 @@ public class AdminTreatmentController {
     public ResponseEntity<TreatmentResponseDto> createTreatment(
             @Valid @RequestBody TreatmentRequestDto request) {
 
-        log.info("HTTP POST /api/v1/admin/treatments name={}", request.getName());
+        log.info("event=http_request method=POST path=/api/v1/admin/treatments requestedOrder={}",
+                request.getDisplayOrder());
         TreatmentResponseDto created = treatmentService.createTreatment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -57,7 +58,7 @@ public class AdminTreatmentController {
             @PathVariable UUID id,
             @Valid @RequestBody TreatmentRequestDto request) {
 
-        log.info("HTTP PUT /api/v1/admin/treatments/{}", id);
+        log.info("event=http_request method=PUT path=/api/v1/admin/treatments/{id} treatmentId={}", id);
         treatmentService.updateTreatment(id, request);
         return ResponseEntity.noContent().build();
     }
@@ -70,7 +71,7 @@ public class AdminTreatmentController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeTreatment(@PathVariable UUID id) {
-        log.info("HTTP DELETE /api/v1/admin/treatments/{}", id);
+        log.info("event=http_request method=DELETE path=/api/v1/admin/treatments/{id} treatmentId={}", id);
         treatmentService.removeTreatment(id);
         return ResponseEntity.noContent().build();
     }
@@ -84,7 +85,7 @@ public class AdminTreatmentController {
     @PostMapping(value = "/reorder", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> reorderTreatments(
             @Valid @RequestBody ReorderRequestDto request) {
-        log.info("HTTP POST /api/v1/admin/treatments/reorder {} <-> {}",
+        log.info("event=http_request method=POST path=/api/v1/admin/treatments/reorder treatmentId1={} treatmentId2={}",
                 request.getId1(), request.getId2());
         treatmentService.reorderTreatments(
                 request.getId1(), request.getId2());

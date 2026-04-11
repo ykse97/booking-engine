@@ -1,18 +1,24 @@
 package com.booking.engine.controller;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.booking.engine.dto.BookingConfirmationRequestDto;
 import com.booking.engine.dto.BookingCheckoutSessionRequestDto;
 import com.booking.engine.dto.BookingCheckoutSessionResponseDto;
+import com.booking.engine.dto.BookingCheckoutValidationRequestDto;
 import com.booking.engine.dto.BookingHoldRequestDto;
 import com.booking.engine.dto.BookingRequestDto;
 import com.booking.engine.dto.BookingResponseDto;
 import com.booking.engine.entity.BookingStatus;
-import com.booking.engine.service.BookingService;
+import com.booking.engine.security.ClientIpResolver;
+import com.booking.engine.security.SecurityAuditLogger;
+import com.booking.engine.service.PublicBookingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDate;
@@ -28,13 +34,17 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 class BookingControllerTest {
 
     private MockMvc mockMvc;
-    private BookingService bookingService;
+    private PublicBookingService bookingService;
+    private ClientIpResolver clientIpResolver;
+    private SecurityAuditLogger securityAuditLogger;
     private ObjectMapper mapper;
 
     @BeforeEach
     void setup() {
-        bookingService = org.mockito.Mockito.mock(BookingService.class);
-        BookingController controller = new BookingController(bookingService);
+        bookingService = org.mockito.Mockito.mock(PublicBookingService.class);
+        clientIpResolver = org.mockito.Mockito.mock(ClientIpResolver.class);
+        securityAuditLogger = org.mockito.Mockito.mock(SecurityAuditLogger.class);
+        BookingController controller = new BookingController(bookingService, clientIpResolver, securityAuditLogger);
         mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(mapper))
@@ -52,7 +62,7 @@ class BookingControllerTest {
     @Test
     void createReturns201() throws Exception {
         BookingRequestDto req = BookingRequestDto.builder()
-                .barberId(UUID.randomUUID())
+                .employeeId(UUID.randomUUID())
                 .treatmentId(UUID.randomUUID())
                 .bookingDate(LocalDate.now().plusDays(1))
                 .startTime(LocalTime.of(10, 0))
@@ -73,7 +83,7 @@ class BookingControllerTest {
     @Test
     void holdReturns201() throws Exception {
         BookingHoldRequestDto req = BookingHoldRequestDto.builder()
-                .barberId(UUID.randomUUID())
+                .employeeId(UUID.randomUUID())
                 .treatmentId(UUID.randomUUID())
                 .bookingDate(LocalDate.now().plusDays(1))
                 .startTime(LocalTime.of(10, 0))
@@ -82,6 +92,7 @@ class BookingControllerTest {
 
         when(bookingService.holdSlot(req, "203.0.113.10", "device-123")).thenReturn(BookingResponseDto.builder()
                 .id(UUID.randomUUID()).status(BookingStatus.PENDING).build());
+        when(clientIpResolver.resolve(any())).thenReturn("203.0.113.10");
 
         mockMvc.perform(post("/api/v1/public/bookings/hold")
                         .header("X-Forwarded-For", "203.0.113.10, 10.0.0.1")
@@ -99,7 +110,7 @@ class BookingControllerTest {
                 .build();
 
         when(bookingService.confirmHeldBooking(bookingId, req)).thenReturn(BookingResponseDto.builder()
-                .id(bookingId).status(BookingStatus.PENDING).build());
+                .id(bookingId).status(BookingStatus.CONFIRMED).build());
 
         mockMvc.perform(post("/api/v1/public/bookings/{id}/confirm", bookingId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -128,8 +139,27 @@ class BookingControllerTest {
 
         mockMvc.perform(post("/api/v1/public/bookings/{id}/checkout", bookingId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(req)))
+                .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void validateCheckoutReturns204() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        BookingCheckoutValidationRequestDto req = BookingCheckoutValidationRequestDto.builder()
+                .customer(BookingRequestDto.CustomerDetailsDto.builder()
+                        .name("n")
+                        .email("e@e.com")
+                        .phone("1")
+                        .build())
+                .build();
+
+        mockMvc.perform(post("/api/v1/public/bookings/{id}/checkout/validate", bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isNoContent());
+
+        verify(bookingService).validateHeldBookingCheckout(bookingId, req);
     }
 
     @Test

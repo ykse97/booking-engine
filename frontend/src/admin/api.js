@@ -1,23 +1,18 @@
 import axios from 'axios';
+import { extractFriendlyErrorMessage, reportAppError } from '../utils/appErrorBus';
 
-const TOKEN_KEY = 'admin_access_token';
+const ADMIN_HOLD_SESSION_HEADER = 'X-Admin-Hold-Session-Id';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 let unauthorizedHandler = null;
 let unauthorizedEventSent = false;
 
-export const api = axios.create({
+const api = axios.create({
     baseURL: API_BASE_URL,
+    timeout: 15000,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }
-});
-
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
 });
 
 api.interceptors.response.use(
@@ -26,10 +21,9 @@ api.interceptors.response.use(
         const status = error?.response?.status;
         const requestUrl = String(error?.config?.url || '');
         const isLoginRequest = requestUrl.includes('/api/v1/public/auth/login');
+        const skipUnauthorizedHandler = Boolean(error?.config?.skipUnauthorizedHandler);
 
-        if (status === 401 && !isLoginRequest) {
-            localStorage.removeItem(TOKEN_KEY);
-
+        if (status === 401 && !isLoginRequest && !skipUnauthorizedHandler) {
             if (!unauthorizedEventSent) {
                 unauthorizedEventSent = true;
                 unauthorizedHandler?.(error);
@@ -41,17 +35,50 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-    login: async (payload) => (await api.post('/api/v1/public/auth/login', payload)).data
+    login: async (payload) => {
+        unauthorizedEventSent = false;
+        return (await api.post('/api/v1/public/auth/login', payload)).data;
+    },
+    getSession: async () => (
+        await api.get('/api/v1/admin/auth/session', {
+            skipUnauthorizedHandler: true
+        })
+    ).data,
+    logout: async () => {
+        unauthorizedEventSent = false;
+        return (
+            await api.post('/api/v1/admin/auth/logout', null, {
+                skipUnauthorizedHandler: true
+            })
+        ).data;
+    }
 };
+
+function buildAdminHoldHeaders(adminHoldSessionId) {
+    return adminHoldSessionId
+        ? {
+            [ADMIN_HOLD_SESSION_HEADER]: adminHoldSessionId
+        }
+        : {};
+}
+
+function resolveApiUrl(path) {
+    return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
 
 export const publicApi = {
     getHairSalon: async () => (await api.get('/api/v1/public/hair-salon')).data,
-    getBarbers: async () => (await api.get('/api/v1/public/barbers')).data,
+    getEmployees: async (params) =>
+        (
+            await api.get('/api/v1/public/employees', {
+                params
+            })
+        ).data,
     getTreatments: async () => (await api.get('/api/v1/public/treatments')).data,
-    getAvailability: async ({ barberId, date, treatmentId }) =>
+    getAvailability: async ({ employeeId, date, treatmentId }) =>
         (
             await api.get('/api/v1/public/availability', {
-                params: { barberId, date, treatmentId }
+                params: { employeeId, date, treatmentId }
             })
         ).data
 };
@@ -64,36 +91,89 @@ export const adminApi = {
     updateHairSalonHours: async (hairSalonId, dayOfWeek, payload) =>
         api.put(`/api/v1/admin/hair-salons/${hairSalonId}/hours/${dayOfWeek}`, payload),
 
-    createBarber: async (payload) => (await api.post('/api/v1/admin/barbers', payload)).data,
-    updateBarber: async (id, payload) => api.put(`/api/v1/admin/barbers/${id}`, payload),
-    deleteBarber: async (id) => api.delete(`/api/v1/admin/barbers/${id}`),
-    reorderBarbers: async (payload) => api.post('/api/v1/admin/barbers/reorder', payload),
+    createEmployee: async (payload) => (await api.post('/api/v1/admin/employees', payload)).data,
+    updateEmployee: async (id, payload) => api.put(`/api/v1/admin/employees/${id}`, payload),
+    deleteEmployee: async (id) => api.delete(`/api/v1/admin/employees/${id}`),
+    reorderEmployees: async (payload) => api.post('/api/v1/admin/employees/reorder', payload),
 
-    getBarberSchedule: async (barberId, from, to) =>
+    getEmployeeSchedule: async (employeeId, from, to) =>
         (
-            await api.get(`/api/v1/admin/barbers/${barberId}/schedule`, {
+            await api.get(`/api/v1/admin/employees/${employeeId}/schedule`, {
                 params: { from, to }
             })
         ).data,
-    getBarberPeriodSettings: async () =>
-        (await api.get('/api/v1/admin/barbers/schedule/period')).data,
-    upsertBarberPeriod: async (payload) =>
-        (await api.put('/api/v1/admin/barbers/schedule/period', payload)).data,
-    upsertBarberDay: async (barberId, payload) =>
-        api.put(`/api/v1/admin/barbers/${barberId}/schedule`, payload),
+    getEmployeePeriodSettings: async () =>
+        (await api.get('/api/v1/admin/employees/schedule/period')).data,
+    upsertEmployeePeriod: async (payload) =>
+        (await api.put('/api/v1/admin/employees/schedule/period', payload)).data,
+    upsertEmployeeDay: async (employeeId, payload) =>
+        api.put(`/api/v1/admin/employees/${employeeId}/schedule`, payload),
 
     createTreatment: async (payload) => (await api.post('/api/v1/admin/treatments', payload)).data,
     updateTreatment: async (id, payload) => api.put(`/api/v1/admin/treatments/${id}`, payload),
     deleteTreatment: async (id) => api.delete(`/api/v1/admin/treatments/${id}`),
     reorderTreatments: async (payload) => api.post('/api/v1/admin/treatments/reorder', payload),
 
-    createAdminBooking: async (payload) => (await api.post('/api/v1/admin/bookings', payload)).data,
+    holdAdminBookingSlot: async (payload, adminHoldSessionId) =>
+        (
+            await api.post('/api/v1/admin/bookings/hold', payload, {
+                headers: buildAdminHoldHeaders(adminHoldSessionId)
+            })
+        ).data,
+    refreshAdminBookingHold: async (bookingId, adminHoldSessionId) =>
+        (
+            await api.post(`/api/v1/admin/bookings/${bookingId}/hold-refresh`, null, {
+                headers: buildAdminHoldHeaders(adminHoldSessionId)
+            })
+        ).data,
+    releaseAdminBookingHold: async (bookingId, adminHoldSessionId) =>
+        api.delete(`/api/v1/admin/bookings/hold/${bookingId}`, {
+            headers: buildAdminHoldHeaders(adminHoldSessionId)
+        }),
+    releaseAdminBookingHoldKeepalive: async (bookingId, adminHoldSessionId) => {
+        if (!bookingId || !adminHoldSessionId || typeof fetch !== 'function') {
+            return;
+        }
+
+        try {
+            await fetch(resolveApiUrl(`/api/v1/admin/bookings/hold/${bookingId}`), {
+                method: 'DELETE',
+                keepalive: true,
+                credentials: 'include',
+                headers: {
+                    ...buildAdminHoldHeaders(adminHoldSessionId)
+                }
+            });
+        } catch (error) {
+            reportAppError(error, {
+                source: 'admin-release-hold-keepalive',
+                level: 'warn',
+                message: 'The admin booking hold could not be released during page exit.',
+                notify: false
+            });
+        }
+    },
+    createAdminBooking: async (payload, adminHoldSessionId) =>
+        (
+            await api.post('/api/v1/admin/bookings', payload, {
+                headers: buildAdminHoldHeaders(adminHoldSessionId)
+            })
+        ).data,
     getAdminBookings: async (search = '') =>
         (
             await api.get('/api/v1/admin/bookings', {
                 params: { search }
             })
         ).data,
+    lookupBookingCustomer: async (phone) => {
+        const response = await api.get('/api/v1/admin/bookings/customer-lookup', {
+            params: { phone },
+            validateStatus: (status) => (status >= 200 && status < 300) || status === 204
+        });
+        return response.status === 204 ? null : response.data;
+    },
+    updateBooking: async (bookingId, payload) =>
+        (await api.put(`/api/v1/admin/bookings/${bookingId}`, payload)).data,
     cancelBooking: async (bookingId) =>
         (await api.post(`/api/v1/admin/bookings/${bookingId}/cancel`)).data,
     getBookingBlacklist: async () =>
@@ -102,18 +182,6 @@ export const adminApi = {
         (await api.post('/api/v1/admin/bookings/blacklist', payload)).data,
     deleteBookingBlacklistEntry: async (id) =>
         api.delete(`/api/v1/admin/bookings/blacklist/${id}`)
-};
-
-export const tokenStorage = {
-    set: (token) => {
-        unauthorizedEventSent = false;
-        localStorage.setItem(TOKEN_KEY, token);
-    },
-    get: () => localStorage.getItem(TOKEN_KEY),
-    clear: () => {
-        unauthorizedEventSent = false;
-        localStorage.removeItem(TOKEN_KEY);
-    }
 };
 
 export function setUnauthorizedHandler(handler) {
@@ -127,24 +195,5 @@ export function setUnauthorizedHandler(handler) {
 }
 
 export function getApiErrorMessage(error) {
-    if (!error) {
-        return 'Unknown error';
-    }
-    const fieldErrors = error.response?.data?.fieldErrors;
-    if (fieldErrors && typeof fieldErrors === 'object') {
-        const messages = [...new Set(Object.values(fieldErrors).filter(Boolean).map((value) => String(value).trim()))];
-        if (messages.length === 1) {
-            return messages[0];
-        }
-        if (messages.length > 1) {
-            return messages.join(' ');
-        }
-    }
-    if (error.response?.data?.message) {
-        return error.response.data.message;
-    }
-    if (typeof error.response?.data === 'string') {
-        return error.response.data;
-    }
-    return error.message || 'Request failed';
+    return extractFriendlyErrorMessage(error, 'Request failed');
 }

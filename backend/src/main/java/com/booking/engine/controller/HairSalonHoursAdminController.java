@@ -38,7 +38,8 @@ public class HairSalonHoursAdminController {
      */
     @GetMapping
     public List<HairSalonHoursResponseDto> getAllHours(@PathVariable UUID hairSalonId) {
-        log.info("HTTP GET /api/v1/admin/hair-salons/{}/hours", hairSalonId);
+        log.info("event=http_request method=GET path=/api/v1/admin/hair-salons/{hairSalonId}/hours hairSalonId={}",
+                hairSalonId);
         return hoursService.getWorkingHours(hairSalonId);
     }
 
@@ -56,7 +57,9 @@ public class HairSalonHoursAdminController {
             @PathVariable DayOfWeek dayOfWeek,
             @Valid @RequestBody HairSalonHoursRequestDto request) {
 
-        log.info("HTTP PUT /api/v1/admin/hair-salons/{}/hours/{}", hairSalonId, dayOfWeek);
+        log.info("event=http_request method=PUT path=/api/v1/admin/hair-salons/{hairSalonId}/hours/{dayOfWeek} hairSalonId={} dayOfWeek={}",
+                hairSalonId,
+                dayOfWeek);
         hoursService.updateWorkingDay(hairSalonId, dayOfWeek, request);
         return ResponseEntity.noContent().build();
     }

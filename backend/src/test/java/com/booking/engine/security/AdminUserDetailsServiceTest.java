@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.booking.engine.entity.AdminRole;
 import com.booking.engine.entity.AdminUserEntity;
 import com.booking.engine.repository.AdminUserRepository;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,7 @@ class AdminUserDetailsServiceTest {
                 .username("admin")
                 .passwordHash("$2a$10$hash")
                 .role(AdminRole.ADMIN)
+                .tokenVersion(6)
                 .active(true)
                 .build();
         when(adminUserRepository.findByUsernameAndActiveTrue("admin")).thenReturn(Optional.of(admin));
@@ -39,7 +41,25 @@ class AdminUserDetailsServiceTest {
 
         assertThat(userDetails.getUsername()).isEqualTo("admin");
         assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hash");
+        assertThat(userDetails.isAccountNonLocked()).isTrue();
         assertThat(userDetails.getAuthorities()).extracting("authority").containsExactly("ROLE_ADMIN");
+        assertThat(service.loadTokenVersionByUsername("admin")).isEqualTo(6);
+    }
+
+    @Test
+    void loadUserByUsernameMarksLockedAdminAsLocked() {
+        AdminUserEntity admin = AdminUserEntity.builder()
+                .username("admin")
+                .passwordHash("$2a$10$hash")
+                .role(AdminRole.ADMIN)
+                .lockedUntil(LocalDateTime.now().plusMinutes(15))
+                .active(true)
+                .build();
+        when(adminUserRepository.findByUsernameAndActiveTrue("admin")).thenReturn(Optional.of(admin));
+
+        UserDetails userDetails = service.loadUserByUsername("admin");
+
+        assertThat(userDetails.isAccountNonLocked()).isFalse();
     }
 
     @Test
@@ -48,6 +68,6 @@ class AdminUserDetailsServiceTest {
 
         assertThatThrownBy(() -> service.loadUserByUsername("missing"))
                 .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessage("Admin user not found: missing");
+                .hasMessage("Authentication failed");
     }
 }

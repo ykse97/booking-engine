@@ -6,9 +6,11 @@ import java.util.UUID;
 
 import com.booking.engine.dto.HairSalonHoursRequestDto;
 import com.booking.engine.dto.HairSalonHoursResponseDto;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
- * Service contract for hair salon weekly working hours.
+ * Service contract for hair salon hours operations.
+ * Defines hair salon hours related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -22,6 +24,7 @@ public interface HairSalonHoursService {
      * @param hairSalonId salon identifier
      * @return list of working day DTOs
      */
+    @PreAuthorize("hasRole('ADMIN')")
     List<HairSalonHoursResponseDto> getWorkingHours(UUID hairSalonId);
 
     /**
@@ -31,5 +34,6 @@ public interface HairSalonHoursService {
      * @param dayOfWeek   target day
      * @param request     update payload
      */
+    @PreAuthorize("hasRole('ADMIN')")
     void updateWorkingDay(UUID hairSalonId, DayOfWeek dayOfWeek, HairSalonHoursRequestDto request);
 }

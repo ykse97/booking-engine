@@ -33,7 +33,7 @@ public class HairSalonController {
      */
     @GetMapping
     public HairSalonResponseDto getHairSalonData() {
-        log.info("HTTP GET /api/v1/public/hair-salon");
+        log.info("event=http_request method=GET path=/api/v1/public/hair-salon");
         return hairSalonService.getHairSalonData();
     }
 }

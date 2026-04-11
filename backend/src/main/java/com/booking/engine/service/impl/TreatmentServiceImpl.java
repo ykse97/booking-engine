@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link TreatmentService}.
- * Manages treatment catalog and website ordering.
+ * Provides treatment related business operations.
  *
  * @author Yehor
  * @version 2.0
@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TreatmentServiceImpl implements TreatmentService {
-
     // ---------------------- Repositories ----------------------
 
     private final TreatmentRepository treatmentRepository;
@@ -53,8 +52,8 @@ public class TreatmentServiceImpl implements TreatmentService {
         // Lock active treatment ordering scope to avoid concurrent reorder conflicts.
         displayOrderService.lockActiveOrderingScope(treatmentRepository);
 
-        log.info("Creating treatment name={}, requestedOrder={}",
-                request.getName(), request.getDisplayOrder());
+        log.info("event=treatment_create action=start requestedOrder={}",
+                request.getDisplayOrder());
 
         Integer order = displayOrderService.resolveDisplayOrder(
                 request.getDisplayOrder(), treatmentRepository);
@@ -66,7 +65,7 @@ public class TreatmentServiceImpl implements TreatmentService {
 
         TreatmentEntity savedTreatment = treatmentRepository.save(treatment);
 
-        log.info("Treatment created successfully with id={}, order={}",
+        log.info("event=treatment_create action=success treatmentId={} displayOrder={}",
                 savedTreatment.getId(), savedTreatment.getDisplayOrder());
 
         return mapper.toDto(savedTreatment);
@@ -77,14 +76,14 @@ public class TreatmentServiceImpl implements TreatmentService {
      */
     @Override
     public List<TreatmentResponseDto> getAllTreatments() {
-        log.info("Retrieving all active treatments");
+        log.debug("event=treatment_list action=start");
 
         List<TreatmentResponseDto> result = treatmentRepository.findAllByActiveTrueOrderByDisplayOrderAsc()
                 .stream()
                 .map(mapper::toDto)
                 .toList();
 
-        log.info("Retrieved {} active treatments", result.size());
+        log.debug("event=treatment_list action=success resultCount={}", result.size());
         return result;
     }
 
@@ -93,11 +92,11 @@ public class TreatmentServiceImpl implements TreatmentService {
      */
     @Override
     public TreatmentResponseDto getTreatmentById(UUID id) {
-        log.info("Retrieving treatment with id={}", id);
+        log.debug("event=treatment_get action=start treatmentId={}", id);
 
         TreatmentEntity treatment = findTreatmentOrThrow(id);
 
-        log.info("Treatment retrieved successfully with id={}", id);
+        log.debug("event=treatment_get action=success treatmentId={}", id);
         return mapper.toDto(treatment);
     }
 
@@ -111,7 +110,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         // Lock active treatment ordering scope to avoid concurrent reorder conflicts.
         displayOrderService.lockActiveOrderingScope(treatmentRepository);
 
-        log.info("Updating treatment with id={}", id);
+        log.info("event=treatment_update action=start treatmentId={}", id);
 
         TreatmentEntity treatment = findTreatmentOrThrow(id);
 
@@ -126,7 +125,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         mapper.updateFromDto(request, treatment);
         treatment.setDisplayOrder(newOrder);
 
-        log.info("Treatment updated successfully with id={}, oldOrder={}, newOrder={}",
+        log.info("event=treatment_update action=success treatmentId={} oldDisplayOrder={} newDisplayOrder={}",
                 id, oldOrder, newOrder);
     }
 
@@ -140,7 +139,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         // Lock active treatment ordering scope to avoid concurrent reorder conflicts.
         displayOrderService.lockActiveOrderingScope(treatmentRepository);
 
-        log.info("Removing treatment with id={}", id);
+        log.info("event=treatment_delete action=start treatmentId={}", id);
 
         TreatmentEntity treatment = findTreatmentOrThrow(id);
         Integer removedOrder = treatment.getDisplayOrder();
@@ -149,21 +148,21 @@ public class TreatmentServiceImpl implements TreatmentService {
 
         displayOrderService.shiftOrdersAfterDelete(removedOrder, treatmentRepository);
 
-        log.info("Treatment removed successfully with id={}, freedOrder={}",
+        log.info("event=treatment_delete action=success treatmentId={} freedDisplayOrder={}",
                 id, removedOrder);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override
     @Transactional
+    @Override
     public void reorderTreatments(UUID treatmentId1, UUID treatmentId2) {
 
         // Lock active treatment ordering scope to avoid concurrent reorder conflicts.
         displayOrderService.lockActiveOrderingScope(treatmentRepository);
 
-        log.info("Swapping treatments {} <-> {}", treatmentId1, treatmentId2);
+        log.info("event=treatment_reorder action=start treatmentId1={} treatmentId2={}", treatmentId1, treatmentId2);
 
         if (treatmentId1.equals(treatmentId2)) {
             throw new IllegalArgumentException("Cannot reorder the same treatment id");
@@ -186,7 +185,8 @@ public class TreatmentServiceImpl implements TreatmentService {
         treatment1.setDisplayOrder(order2);
         treatmentRepository.saveAndFlush(treatment1);
 
-        log.info("Swap complete {}->{}, {}->{}",
+        log.info(
+                "event=treatment_reorder action=success treatmentId1={} newDisplayOrder1={} treatmentId2={} newDisplayOrder2={}",
                 treatmentId1, order2, treatmentId2, order1);
     }
 
@@ -196,13 +196,15 @@ public class TreatmentServiceImpl implements TreatmentService {
      * Finds treatment by ID or throws exception.
      *
      * @param id the treatment UUID
+     *
      * @return the treatment entity
+     *
      * @throws EntityNotFoundException if not found
      */
     private TreatmentEntity findTreatmentOrThrow(UUID id) {
         return treatmentRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> {
-                    log.warn("Treatment not found with ID={}", id);
+                    log.warn("event=treatment_lookup outcome=not_found treatmentId={}", id);
                     return new EntityNotFoundException("Treatment", id);
                 });
     }

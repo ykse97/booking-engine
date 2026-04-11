@@ -6,6 +6,7 @@ import com.booking.engine.entity.BookingBlacklistEntryEntity;
 import com.booking.engine.exception.BookingValidationException;
 import com.booking.engine.exception.EntityNotFoundException;
 import com.booking.engine.repository.BookingBlacklistEntryRepository;
+import com.booking.engine.security.SensitiveLogSanitizer;
 import com.booking.engine.service.BookingBlacklistService;
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link BookingBlacklistService}.
- * Handles blacklist validation and entry lifecycle for customer contact data.
+ * Provides booking blacklist related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -27,11 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BookingBlacklistServiceImpl implements BookingBlacklistService {
-
     // ---------------------- Repositories ----------------------
 
     private final BookingBlacklistEntryRepository blacklistRepository;
-
     // ---------------------- Public Methods ----------------------
 
     /**
@@ -43,11 +42,19 @@ public class BookingBlacklistServiceImpl implements BookingBlacklistService {
         String normalizedPhone = normalizePhone(phone);
 
         if (normalizedEmail != null && blacklistRepository.existsByActiveTrueAndEmailNormalized(normalizedEmail)) {
+            log.warn(
+                    "event=booking_blacklist_validation outcome=blocked_customer emailMask={} phoneHash={}",
+                    maskEmailForLogs(email),
+                    hashPhoneForLogs(phone));
             throw new BookingValidationException(
                     "This email address is in the booking blacklist and cannot be used for appointments.");
         }
 
         if (normalizedPhone != null && blacklistRepository.existsByActiveTrueAndPhoneNormalized(normalizedPhone)) {
+            log.warn(
+                    "event=booking_blacklist_validation outcome=blocked_customer emailMask={} phoneHash={}",
+                    maskEmailForLogs(email),
+                    hashPhoneForLogs(phone));
             throw new BookingValidationException(
                     "This phone number is in the booking blacklist and cannot be used for appointments.");
         }
@@ -79,8 +86,8 @@ public class BookingBlacklistServiceImpl implements BookingBlacklistService {
     /**
      * {@inheritDoc}
      */
-    @Override
     @Transactional
+    @Override
     public BookingBlacklistEntryResponseDto createEntry(BookingBlacklistEntryRequestDto request) {
         String normalizedEmail = normalizeEmail(request.getEmail());
         String normalizedPhone = normalizePhone(request.getPhone());
@@ -107,32 +114,28 @@ public class BookingBlacklistServiceImpl implements BookingBlacklistService {
                 .build();
 
         BookingBlacklistEntryEntity savedEntry = blacklistRepository.save(entry);
-        log.info("Booking blacklist entry created id={}", savedEntry.getId());
+        log.info("event=booking_blacklist_create action=success blacklistEntryId={}", savedEntry.getId());
         return toDto(savedEntry);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override
     @Transactional
+    @Override
     public void deleteEntry(UUID id) {
         BookingBlacklistEntryEntity entry = blacklistRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new EntityNotFoundException("BookingBlacklistEntry", id));
 
         entry.setActive(false);
         blacklistRepository.save(entry);
-        log.info("Booking blacklist entry deactivated id={}", id);
+        log.info("event=booking_blacklist_delete action=success blacklistEntryId={}", id);
     }
 
     // ---------------------- Private Methods ----------------------
 
-    /*
-     * Maps a persisted blacklist entity into the response DTO returned by admin
-     * endpoints.
-     *
-     * @param entity blacklist entity
-     * @return response DTO
+    /**
+     * Maps a persisted blacklist entity into the response DTO returned by admin endpoints.
      */
     private BookingBlacklistEntryResponseDto toDto(BookingBlacklistEntryEntity entity) {
         return BookingBlacklistEntryResponseDto.builder()
@@ -188,5 +191,19 @@ public class BookingBlacklistServiceImpl implements BookingBlacklistService {
 
         String normalized = cleaned.replaceAll("[^0-9]", "");
         return normalized.isBlank() ? null : normalized;
+    }
+
+    /**
+     * Masks customer email before writing it to operational logs.
+     */
+    private String maskEmailForLogs(String email) {
+        return SensitiveLogSanitizer.maskEmail(cleanValue(email));
+    }
+
+    /**
+     * Hashes customer phone before writing it to operational logs.
+     */
+    private String hashPhoneForLogs(String phone) {
+        return SensitiveLogSanitizer.hashPhone(cleanValue(phone));
     }
 }

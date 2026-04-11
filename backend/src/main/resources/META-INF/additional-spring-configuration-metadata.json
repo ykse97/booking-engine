@@ -19,6 +19,11 @@
       "name": "app.admin.bootstrap.password",
       "type": "java.lang.String",
       "description": "Admin password to hash and store during bootstrap."
+    },
+    {
+      "name": "app.security.trusted-proxy-cidrs",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Exact IPs or CIDR ranges that are allowed to supply forwarded headers."
     }
   ]
 }

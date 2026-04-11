@@ -1,5 +1,7 @@
 package com.booking.engine.exception;
 
+import com.booking.engine.security.AuthSecurityMessages;
+import com.booking.engine.security.SensitiveLogSanitizer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -41,6 +43,7 @@ public class GlobalExceptionHandler {
     private static final String ERROR_BAD_REQUEST = "Bad Request";
     private static final String ERROR_UNAUTHORIZED = "Unauthorized";
     private static final String ERROR_FORBIDDEN = "Forbidden";
+    private static final String ERROR_TOO_MANY_REQUESTS = "Too Many Requests";
     private static final String ERROR_INTERNAL = "Internal Server Error";
 
     // ---------------------- 404 Not Found ----------------------
@@ -53,7 +56,7 @@ public class GlobalExceptionHandler {
             EntityNotFoundException ex,
             HttpServletRequest request) {
 
-        log.warn("Entity not found: {}", ex.getMessage());
+        log.warn("Entity not found: {}", sanitizeLogMessage(ex.getMessage()));
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -76,7 +79,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.warn("Validation failed for request to {}: {}",
-                request.getRequestURI(), ex.getMessage());
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
 
         Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
@@ -110,7 +113,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.warn("Malformed request body for {}: {}",
-                request.getRequestURI(), ex.getMessage());
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
 
         String message = "Some submitted values could not be read. Please review the form and try again.";
         Throwable current = ex;
@@ -165,7 +168,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.warn("Constraint violation for request to {}: {}",
-                request.getRequestURI(), ex.getMessage());
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
 
         String message = ex.getConstraintViolations()
                 .stream()
@@ -191,13 +194,13 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.warn("Booking validation failed for request to {}: {}",
-                request.getRequestURI(), ex.getMessage());
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 ERROR_BAD_REQUEST,
-                ex.getMessage(),
+                ex.getClientMessage(),
                 request.getRequestURI());
 
         return ResponseEntity.badRequest().body(response);
@@ -211,14 +214,16 @@ public class GlobalExceptionHandler {
             PaymentProcessingException ex,
             HttpServletRequest request) {
 
-        log.warn("Payment processing failed for request to {}: {}",
-                request.getRequestURI(), ex.getMessage());
+        log.warn("Payment processing failed for request to {} reason={} details={}",
+                request.getRequestURI(),
+                ex.getClass().getSimpleName(),
+                sanitizeLogMessage(ex.getMessage()));
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 ERROR_BAD_REQUEST,
-                ex.getMessage(),
+                ex.getClientMessage(),
                 request.getRequestURI());
 
         return ResponseEntity.badRequest().body(response);
@@ -233,7 +238,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.warn("Illegal state for request to {}: {}",
-                request.getRequestURI(), ex.getMessage());
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -254,7 +259,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.warn("Illegal argument for request to {}: {}",
-                request.getRequestURI(), ex.getMessage());
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -279,12 +284,12 @@ public class GlobalExceptionHandler {
                 : ex.getMessage();
 
         log.warn("Data integrity violation for request to {}: {}",
-                request.getRequestURI(), causeMessage);
+                request.getRequestURI(), sanitizeLogMessage(causeMessage));
 
         String friendly = "Request conflicts with existing data constraints";
         String lower = causeMessage != null ? causeMessage.toLowerCase() : "";
-        if (lower.contains("display_order") || lower.contains("barber_display_order")) {
-            friendly = "Display order is already in use by another barber. Please choose a different position.";
+        if (lower.contains("display_order") || lower.contains("employee_display_order")) {
+            friendly = "Display order is already in use by another employee. Please choose a different position.";
         }
 
         ErrorResponse response = new ErrorResponse(
@@ -305,16 +310,41 @@ public class GlobalExceptionHandler {
             AuthenticationException ex,
             HttpServletRequest request) {
 
-        log.warn("Authentication failed for request to {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Authentication failed for request to {} reason={}",
+                request.getRequestURI(),
+                ex.getClass().getSimpleName());
+        String message = isLoginRequest(request)
+                ? AuthSecurityMessages.INVALID_CREDENTIALS
+                : AuthSecurityMessages.AUTHENTICATION_FAILED;
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
                 ERROR_UNAUTHORIZED,
-                ex.getMessage(),
+                message,
                 request.getRequestURI());
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    /**
+     * Handles login throttling responses.
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(
+            RateLimitExceededException ex,
+            HttpServletRequest request) {
+
+        log.warn("Rate limit exceeded for request to {}: {}", request.getRequestURI(), sanitizeLogMessage(ex.getMessage()));
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                ERROR_TOO_MANY_REQUESTS,
+                AuthSecurityMessages.TOO_MANY_LOGIN_ATTEMPTS,
+                request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
     }
 
     /**
@@ -325,13 +355,15 @@ public class GlobalExceptionHandler {
             AccessDeniedException ex,
             HttpServletRequest request) {
 
-        log.warn("Access denied for request to {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Access denied for request to {} reason={}",
+                request.getRequestURI(),
+                ex.getClass().getSimpleName());
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.FORBIDDEN.value(),
                 ERROR_FORBIDDEN,
-                ex.getMessage(),
+                ERROR_FORBIDDEN,
                 request.getRequestURI());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
@@ -348,7 +380,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.error("Unexpected error for request to {}: {}",
-                request.getRequestURI(), ex.getMessage(), ex);
+                request.getRequestURI(), sanitizeLogMessage(ex.getMessage()), ex);
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -381,8 +413,8 @@ public class GlobalExceptionHandler {
         if (lowerCaseMessage.equals("must not be null")
                 || lowerCaseMessage.equals("must not be blank")
                 || lowerCaseMessage.equals("must not be empty")
-                || lowerCaseMessage.equals("не должно равняться null")
-                || lowerCaseMessage.equals("не должно быть пустым")) {
+                || lowerCaseMessage.equals("РЅРµ РґРѕР»Р¶РЅРѕ СЂР°РІРЅСЏС‚СЊСЃСЏ null")
+                || lowerCaseMessage.equals("РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј")) {
             return fieldLabel + " is required.";
         }
 
@@ -404,7 +436,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * Converts raw field names like "applyToAllBarbers" into readable labels
+     * Converts raw field names like "applyToAllEmployees" into readable labels
      * that work better in UI-facing validation and parsing messages.
      *
      * @param fieldName raw binding field name
@@ -426,5 +458,13 @@ public class GlobalExceptionHandler {
         }
 
         return Character.toUpperCase(simplified.charAt(0)) + simplified.substring(1);
+    }
+
+    private boolean isLoginRequest(HttpServletRequest request) {
+        return request != null && "/api/v1/public/auth/login".equals(request.getRequestURI());
+    }
+
+    private String sanitizeLogMessage(String message) {
+        return SensitiveLogSanitizer.sanitizeForLogs(message);
     }
 }

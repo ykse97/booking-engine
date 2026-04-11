@@ -4,7 +4,8 @@ import com.booking.engine.dto.LoginRequestDto;
 import com.booking.engine.dto.LoginResponseDto;
 
 /**
- * Service contract for JWT authentication.
+ * Service contract for auth operations.
+ * Defines auth related business operations.
  *
  * @author Yehor
  * @version 1.0
@@ -19,5 +20,12 @@ public interface AuthService {
      * @return access token response
      */
     LoginResponseDto login(LoginRequestDto request);
-}
 
+    /**
+     * Invalidates the current admin access-token version so already-issued access
+     * tokens can no longer be used.
+     *
+     * @param username authenticated admin username
+     */
+    void logout(String username);
+}

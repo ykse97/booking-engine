@@ -24,7 +24,7 @@ public interface BookingMapper extends BaseMapper<BookingEntity, BookingRequestD
      */
     @Override
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "barber", ignore = true)
+    @Mapping(target = "employee", ignore = true)
     @Mapping(target = "treatment", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "expiresAt", ignore = true)
@@ -35,6 +35,7 @@ public interface BookingMapper extends BaseMapper<BookingEntity, BookingRequestD
     @Mapping(target = "holdClientDeviceId", ignore = true)
     @Mapping(target = "paymentCapturedAt", ignore = true)
     @Mapping(target = "paymentReleasedAt", ignore = true)
+    @Mapping(target = "slotLocked", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -49,8 +50,8 @@ public interface BookingMapper extends BaseMapper<BookingEntity, BookingRequestD
      * Maps flat entity fields to nested customer DTO.
      */
     @Override
-    @Mapping(target = "barberId", source = "barber.id")
-    @Mapping(target = "barberName", source = "barber.name")
+    @Mapping(target = "employeeId", source = "employee.id")
+    @Mapping(target = "employeeName", source = "employee.name")
     @Mapping(target = "treatmentId", source = "treatment.id")
     @Mapping(target = "treatmentName", source = "treatment.name")
     // Map flat entity fields to nested customer DTO

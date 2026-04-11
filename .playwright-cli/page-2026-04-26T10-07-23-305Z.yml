@@ -1,0 +1,122 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e121]:
+      - link "Royal Chair logo Royal Chair Barbershop" [ref=e122] [cursor=pointer]:
+        - /url: /
+        - img "Royal Chair logo" [ref=e124]
+        - generic [ref=e125]:
+          - generic [ref=e126]: Royal Chair
+          - generic [ref=e127]: Barbershop
+      - generic [ref=e128]:
+        - button "Switch to light mode" [ref=e129] [cursor=pointer]:
+          - img
+        - button "Close menu" [expanded] [active] [ref=e132] [cursor=pointer]:
+          - img [ref=e133]
+  - generic [ref=e137]:
+    - generic [ref=e138]:
+      - link "Royal Chair logo Royal Chair Barbershop" [ref=e139] [cursor=pointer]:
+        - /url: /
+        - img "Royal Chair logo" [ref=e141]
+        - generic [ref=e142]:
+          - generic [ref=e143]: Royal Chair
+          - generic [ref=e144]: Barbershop
+      - generic [ref=e145]:
+        - button "Switch to light mode" [ref=e146] [cursor=pointer]:
+          - img
+        - button "Close menu" [ref=e147] [cursor=pointer]:
+          - img [ref=e148]
+    - generic [ref=e151]:
+      - link "Home" [ref=e153] [cursor=pointer]:
+        - /url: /
+      - link "Gallery" [ref=e155] [cursor=pointer]:
+        - /url: /
+      - link "Services" [ref=e157] [cursor=pointer]:
+        - /url: /services
+      - link "Book Now" [ref=e159] [cursor=pointer]:
+        - /url: /booking
+      - link "FAQ" [ref=e161] [cursor=pointer]:
+        - /url: /faq
+      - link "Contact" [ref=e163] [cursor=pointer]:
+        - /url: /
+    - generic [ref=e164]:
+      - generic [ref=e165]:
+        - link "Instagram" [ref=e166] [cursor=pointer]:
+          - /url: https://www.instagram.com/royalchair.ie
+          - img [ref=e167]
+        - link "TikTok" [ref=e169] [cursor=pointer]:
+          - /url: https://www.tiktok.com/@royalchair.ie
+          - img [ref=e170]
+      - generic [ref=e172]: Royal style. Sharp detail. Premium finish.
+  - main [ref=e26]:
+    - generic [ref=e27]:
+      - generic [ref=e33]:
+        - paragraph [ref=e34]: Royal Chair Barber & Beauty Salon
+        - paragraph [ref=e35]: Women / Men / Kids
+        - heading "Your Style, Perfected" [level=1] [ref=e36]
+        - paragraph [ref=e37]: Cuts, styling, coloring, and grooming for women, men, and kids - from quick trims to bold color and restorative treatments in one welcoming space.
+        - link "+35383 182 3456" [ref=e39] [cursor=pointer]:
+          - /url: tel:+353831823456
+        - button "Book Appointment" [ref=e41] [cursor=pointer]
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: crafted cuts & shaves
+          - heading "Our Services" [level=2] [ref=e45]
+        - generic [ref=e47]: We could not find the information you requested.
+  - contentinfo [ref=e54]:
+    - generic [ref=e55]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - img "Royal Chair logo" [ref=e62]
+              - generic [ref=e63]:
+                - paragraph [ref=e64]: Visit Royal Chair
+                - heading "Find Us In Google Maps" [level=3] [ref=e65]
+            - paragraph [ref=e67]: Open the full Royal Chair location in Google Maps, check the latest contact details, or launch turn-by-turn directions straight from your device.
+          - generic [ref=e68]:
+            - link "Open in Google Maps" [ref=e69] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Royal%20Chair%2C%20Ennis%2C%20Ireland
+              - img [ref=e70]
+              - generic [ref=e74]: Open in Google Maps
+            - link "Get Directions" [ref=e75] [cursor=pointer]:
+              - /url: https://www.google.com/maps/dir/?api=1&destination=Royal%20Chair%2C%20Ennis%2C%20Ireland&travelmode=driving
+              - img [ref=e76]
+              - generic [ref=e78]: Get Directions
+        - generic [ref=e80]:
+          - generic [ref=e82]:
+            - img [ref=e83]
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Phone
+              - paragraph [ref=e87]: +353 00 000 0000
+          - generic [ref=e89]:
+            - img [ref=e90]
+            - generic [ref=e93]:
+              - paragraph [ref=e94]: Location
+              - paragraph [ref=e95]: Royal Chair Barbershop, Ireland
+          - generic [ref=e97]:
+            - img [ref=e98]
+            - generic [ref=e101]:
+              - paragraph [ref=e102]: Hours
+              - paragraph [ref=e103]: "Mon-Fri: 9:00 AM - 5:00 PM | Sat: 10:00 AM - 6:00 PM"
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - link "Royal Chair on Instagram" [ref=e106] [cursor=pointer]:
+            - /url: https://www.instagram.com/royalchair.ie
+            - img [ref=e107]
+          - link "Royal Chair on TikTok" [ref=e109] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@royalchair.ie
+            - img [ref=e110]
+        - generic [ref=e113]:
+          - link "Home" [ref=e114] [cursor=pointer]:
+            - /url: /
+          - link "Services" [ref=e115] [cursor=pointer]:
+            - /url: /services
+          - link "Booking" [ref=e116] [cursor=pointer]:
+            - /url: /booking
+          - link "Barbers" [ref=e117] [cursor=pointer]:
+            - /url: /
+          - link "FAQ" [ref=e118] [cursor=pointer]:
+            - /url: /faq
+        - generic [ref=e120]:
+          - text: Copyright 2026 Royal Chair Barber and Beauty Salon. All rights reserved.
+          - text: Website design & development by Yehor Kachur.

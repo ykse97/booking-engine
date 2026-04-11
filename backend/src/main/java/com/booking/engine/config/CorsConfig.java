@@ -39,9 +39,10 @@ public class CorsConfig {
                 "Authorization",
                 "Content-Type",
                 "Origin",
-                "X-Booking-Device-Id"));
+                "X-Booking-Device-Id",
+                "X-Admin-Hold-Session-Id"));
         configuration.setExposedHeaders(List.of("Location"));
-        configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Phone, MapPin, Clock, ExternalLink, Navigation } from 'lucide-react';
 import { FaInstagram, FaTiktok } from 'react-icons/fa';
 import useHairSalonInfo from '../hooks/useHairSalonInfo';
+import { useColorScheme } from '../context/ColorSchemeContext';
 import SectionLink from './SectionLink';
+import { getThemeLogoPath } from '../utils/themeAssets';
 
 const dayOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const GOOGLE_MAPS_PLACE_URL =
@@ -32,7 +34,33 @@ function formatHours(workingHours) {
 
 export default function Footer() {
     const info = useHairSalonInfo();
+    const { colorScheme } = useColorScheme();
     const hoursText = useMemo(() => formatHours(info?.workingHours), [info]);
+    const logoPath = getThemeLogoPath(colorScheme);
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    function navigateToRouteTop(path) {
+        if (location.pathname === path) {
+            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            return;
+        }
+
+        sessionStorage.setItem(
+            'pending-section-scroll',
+            JSON.stringify({
+                path,
+                sectionId: null,
+                ts: Date.now()
+            })
+        );
+
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.add('section-scroll-pending');
+        }
+
+        navigate(path);
+    }
 
     return (
         <footer className="site-footer mt-14 border-t border-[#c6934b30] bg-[#040404]/88 pb-10 pt-10" id="contact">
@@ -49,13 +77,13 @@ export default function Footer() {
                                 <div className="flex items-center gap-4">
                                     <div className="site-footer-logo h-20 w-20 overflow-hidden rounded-full border border-[#c6934b60] bg-[#080808] shadow-gold">
                                         <img
-                                            src="/logo-royal.jpg"
+                                            src={logoPath}
                                             alt="Royal Chair logo"
                                             width="320"
                                             height="320"
                                             loading="lazy"
                                             decoding="async"
-                                            fetchPriority="low"
+                                            fetchpriority="low"
                                             className="h-full w-full object-cover"
                                         />
                                     </div>
@@ -93,7 +121,7 @@ export default function Footer() {
                                     href={GOOGLE_MAPS_DIRECTIONS_URL}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="site-footer-secondary-action inline-flex min-h-[56px] items-center justify-center gap-2 rounded-[18px] border border-[#c6934b42] bg-[rgba(255,255,255,0.03)] px-5 text-center font-heading text-[0.84rem] uppercase tracking-[0.12em] text-ivory shadow-[inset_0_1px_0_rgba(255,238,208,0.04)] transition hover:border-[#e3c07a] hover:text-[#fff1cf]"
+                                    className="site-footer-primary-action inline-flex min-h-[56px] items-center justify-center gap-2 rounded-[18px] border border-[#c6934b42] bg-[rgba(255,255,255,0.03)] px-5 text-center font-heading text-[0.84rem] uppercase tracking-[0.12em] text-ivory shadow-[inset_0_1px_0_rgba(255,238,208,0.04)] transition hover:border-[#e3c07a] hover:text-[#fff1cf]"
                                 >
                                     <Navigation size={16} />
                                     <span>Get Directions</span>
@@ -156,6 +184,8 @@ export default function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="footer-social-link"
+                            aria-label="Royal Chair on Instagram"
+                            title="Instagram"
                         >
                             <FaInstagram size={18} />
                         </a>
@@ -165,6 +195,8 @@ export default function Footer() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="footer-social-link"
+                            aria-label="Royal Chair on TikTok"
+                            title="TikTok"
                         >
                             <FaTiktok size={18} />
                         </a>
@@ -176,9 +208,25 @@ export default function Footer() {
                         <SectionLink fallbackPath="/" sectionId={null}>
                             Home
                         </SectionLink>
-                        <Link to="/services">Services</Link>
-                        <Link to="/booking">Booking</Link>
-                        <SectionLink sectionId="barbers">Barbers</SectionLink>
+                        <a
+                            href="/services"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                navigateToRouteTop('/services');
+                            }}
+                        >
+                            Services
+                        </a>
+                        <a
+                            href="/booking"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                navigateToRouteTop('/booking');
+                            }}
+                        >
+                            Booking
+                        </a>
+                        <SectionLink sectionId="employees">Barbers</SectionLink>
                         <Link to="/faq">FAQ</Link>
                     </div>
 

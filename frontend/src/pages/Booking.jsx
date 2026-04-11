@@ -27,12 +27,13 @@ import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import { publicApi, PublicApiError } from '../api/publicApi';
 import { primeStripeOrigin } from '../utils/stripeHints';
 import { scrollWindowToElement } from '../utils/scroll';
+import { reportAppError } from '../utils/appErrorBus';
 import '../styles/booking-shared.css';
 import '../styles/booking.css';
 
 const FALLBACK_TREATMENT_IMAGE =
     'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=1200&q=80';
-const FALLBACK_BARBER_IMAGE =
+const FALLBACK_EMPLOYEE_IMAGE =
     'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=80';
 
 const BOOKING_STEPS = [
@@ -42,6 +43,7 @@ const BOOKING_STEPS = [
     { id: 4, label: 'Details' }
 ];
 const HOLD_DURATION_SECONDS = 10 * 60;
+const SLOT_AVAILABILITY_REFRESH_INTERVAL_MS = 5_000;
 const BOOKING_CONFIRMATION_POLL_ATTEMPTS = 12;
 const BOOKING_CONFIRMATION_POLL_DELAY_MS = 800;
 const BOOKING_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
@@ -111,18 +113,6 @@ function initialCustomerForm() {
     };
 }
 
-function truncateIdentifier(value) {
-    if (!value) {
-        return null;
-    }
-
-    if (value.length <= 12) {
-        return value;
-    }
-
-    return `${value.slice(0, 8)}...${value.slice(-4)}`;
-}
-
 function wait(delayMs) {
     return new Promise((resolve) => {
         window.setTimeout(resolve, delayMs);
@@ -144,11 +134,11 @@ export default function Booking() {
 
     const [catalogLoading, setCatalogLoading] = useState(true);
     const [catalogError, setCatalogError] = useState('');
-    const [barbers, setBarbers] = useState([]);
+    const [employees, setEmployees] = useState([]);
     const [treatments, setTreatments] = useState([]);
 
     const [selectedTreatmentId, setSelectedTreatmentId] = useState('');
-    const [selectedBarberId, setSelectedBarberId] = useState('');
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
     const [selectedDate, setSelectedDate] = useState(() => new Date());
 
     const [slotsLoading, setSlotsLoading] = useState(false);
@@ -180,24 +170,50 @@ export default function Booking() {
         primeStripeOrigin();
     }, []);
 
+    function getEmployeeTreatmentIds(employee) {
+        if (!Array.isArray(employee?.treatmentIds)) {
+            return [];
+        }
+
+        return employee.treatmentIds.filter((value) => typeof value === 'string' && value.trim());
+    }
+
     const sortedTreatments = useMemo(
         () => [...treatments].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
         [treatments]
     );
 
-    const sortedBarbers = useMemo(
-        () => [...barbers].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
-        [barbers]
+    const sortedEmployees = useMemo(
+        () => [...employees].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
+        [employees]
     );
+
+    const visibleTreatments = useMemo(() => {
+        const supportedTreatmentIds = new Set(
+            sortedEmployees.flatMap((employee) => getEmployeeTreatmentIds(employee))
+        );
+
+        return sortedTreatments.filter((treatment) => supportedTreatmentIds.has(treatment.id));
+    }, [sortedEmployees, sortedTreatments]);
+
+    const eligibleEmployees = useMemo(() => {
+        if (!selectedTreatmentId) {
+            return [];
+        }
+
+        return sortedEmployees.filter((employee) =>
+            getEmployeeTreatmentIds(employee).includes(selectedTreatmentId)
+        );
+    }, [selectedTreatmentId, sortedEmployees]);
 
     const selectedTreatment = useMemo(
         () => sortedTreatments.find((item) => item.id === selectedTreatmentId) || null,
         [sortedTreatments, selectedTreatmentId]
     );
 
-    const selectedBarber = useMemo(
-        () => sortedBarbers.find((item) => item.id === selectedBarberId) || null,
-        [sortedBarbers, selectedBarberId]
+    const selectedEmployee = useMemo(
+        () => sortedEmployees.find((item) => item.id === selectedEmployeeId) || null,
+        [sortedEmployees, selectedEmployeeId]
     );
     const selectedTreatmentPrice = selectedTreatment?.price ?? null;
 
@@ -212,7 +228,7 @@ export default function Booking() {
 
     const maxReachedStep = activeHold
         ? 4
-        : selectedBarberId
+        : selectedEmployeeId
             ? 3
             : selectedTreatmentId
                 ? 2
@@ -282,20 +298,18 @@ export default function Booking() {
             setCatalogError('');
 
             try {
-                const [barberData, treatmentData] = await Promise.all([
-                    publicApi.getBarbers(),
+                const [employeeData, treatmentData] = await Promise.all([
+                    publicApi.getEmployees({ bookable: true }),
                     publicApi.getTreatments()
                 ]);
 
                 if (ignore) return;
 
-                const nextBarbers = Array.isArray(barberData) ? barberData : [];
+                const nextEmployees = Array.isArray(employeeData) ? employeeData : [];
                 const nextTreatments = Array.isArray(treatmentData) ? treatmentData : [];
 
-                setBarbers(nextBarbers);
+                setEmployees(nextEmployees);
                 setTreatments(nextTreatments);
-                setSelectedBarberId((prev) => prev || nextBarbers[0]?.id || '');
-                setSelectedTreatmentId((prev) => prev || nextTreatments[0]?.id || '');
             } catch (error) {
                 if (!ignore) {
                     setCatalogError(error.message || 'Failed to load booking catalog.');
@@ -313,6 +327,24 @@ export default function Booking() {
             ignore = true;
         };
     }, []);
+
+    useEffect(() => {
+        setSelectedTreatmentId((prev) =>
+            visibleTreatments.some((treatment) => treatment.id === prev) ? prev : visibleTreatments[0]?.id || ''
+        );
+    }, [visibleTreatments]);
+
+    useEffect(() => {
+        setSelectedEmployeeId((prev) =>
+            eligibleEmployees.some((employee) => employee.id === prev) ? prev : eligibleEmployees[0]?.id || ''
+        );
+    }, [eligibleEmployees]);
+
+    useEffect(() => {
+        setSelectedSlot(null);
+        setTimeSelectionError('');
+        setSubmitError('');
+    }, [selectedTreatmentId, selectedEmployeeId]);
 
     useEffect(() => {
         let ignore = false;
@@ -347,7 +379,7 @@ export default function Booking() {
         let ignore = false;
 
         async function loadAvailability() {
-            if (!selectedBarberId || !selectedTreatmentId) {
+            if (!selectedEmployeeId || !selectedTreatmentId) {
                 setSlots([]);
                 setSelectedSlot(null);
                 setTimeSelectionError('');
@@ -360,7 +392,7 @@ export default function Booking() {
 
             try {
                 const data = await publicApi.getAvailability({
-                    barberId: selectedBarberId,
+                    employeeId: selectedEmployeeId,
                     treatmentId: selectedTreatmentId,
                     date: toIsoDate(selectedDate)
                 });
@@ -392,7 +424,7 @@ export default function Booking() {
         return () => {
             ignore = true;
         };
-    }, [selectedBarberId, selectedTreatmentId, selectedDate]);
+    }, [selectedEmployeeId, selectedTreatmentId, selectedDate]);
 
     useEffect(() => {
         if (!activeHold?.expiresAtMs) {
@@ -471,7 +503,7 @@ export default function Booking() {
     }, [step]);
 
     useEffect(() => {
-        if (step !== 3 || !selectedBarberId || !selectedTreatmentId) {
+        if (step !== 3 || !selectedEmployeeId || !selectedTreatmentId) {
             return;
         }
 
@@ -486,6 +518,65 @@ export default function Booking() {
                 setSlotsLoading(false);
             });
     }, [step]);
+
+    useEffect(() => {
+        if (
+            step !== 3
+            || !selectedEmployeeId
+            || !selectedTreatmentId
+            || Boolean(activeHold?.id)
+            || holdingSlot
+            || releasingHold
+            || slotsLoading
+        ) {
+            return undefined;
+        }
+
+        const intervalId = window.setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+                return;
+            }
+
+            const selectedSlotSnapshot = selectedSlot;
+
+            refreshAvailabilityAfterBooking({
+                keepCurrentSelection: true,
+                selectionToKeep: selectedSlotSnapshot
+            })
+                .then((nextSlots) => {
+                    setSlotsError('');
+
+                    if (
+                        selectedSlotSnapshot
+                        && !nextSlots.some(
+                            (slot) =>
+                                slot.startTime === selectedSlotSnapshot.startTime
+                                && slot.endTime === selectedSlotSnapshot.endTime
+                                && slot.available
+                        )
+                    ) {
+                        setTimeSelectionError('This time slot is no longer available. Please choose another time.');
+                    }
+                })
+                .catch((error) => {
+                    setSlotsError(error.message || 'Failed to refresh time slots.');
+                });
+        }, SLOT_AVAILABILITY_REFRESH_INTERVAL_MS);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [
+        activeHold?.id,
+        holdingSlot,
+        releasingHold,
+        selectedDate,
+        selectedEmployeeId,
+        selectedSlot,
+        selectedTreatmentId,
+        slotsLoading,
+        step
+    ]);
 
     useEffect(() => {
         function releaseHeldSlotOnPageLeave() {
@@ -508,7 +599,14 @@ export default function Booking() {
                     Accept: 'application/json'
                 },
                 keepalive: true
-            }).catch(() => { });
+            }).catch((error) => {
+                reportAppError(error, {
+                    source: 'booking-release-page-leave',
+                    level: 'warn',
+                    message: 'The held booking slot could not be released while leaving the page.',
+                    notify: false
+                });
+            });
         }
 
         window.addEventListener('pagehide', releaseHeldSlotOnPageLeave);
@@ -536,13 +634,13 @@ export default function Booking() {
         keepCurrentSelection = false,
         selectionToKeep = selectedSlot
     } = {}) {
-        if (!selectedBarberId || !selectedTreatmentId) {
+        if (!selectedEmployeeId || !selectedTreatmentId) {
             setSlots([]);
             return [];
         }
 
         const refreshedSlots = await publicApi.getAvailability({
-            barberId: selectedBarberId,
+            employeeId: selectedEmployeeId,
             treatmentId: selectedTreatmentId,
             date: toIsoDate(selectedDate)
         });
@@ -577,6 +675,7 @@ export default function Booking() {
         } catch (error) {
             setSlotsError(error.message || 'Failed to release the held slot.');
         } finally {
+            activeHoldRef.current = null;
             setActiveHold(null);
             setHoldSecondsLeft(null);
             setStripeModalOpen(false);
@@ -605,10 +704,10 @@ export default function Booking() {
         }
 
         if (step === 1 && !selectedTreatmentId) return;
-        if (step === 2 && !selectedBarberId) return;
+        if (step === 2 && !selectedEmployeeId) return;
 
         if (step === 3) {
-            if (!selectedTreatment || !selectedBarber || !selectedSlot || holdingSlot) {
+            if (!selectedTreatment || !selectedEmployee || !selectedSlot || holdingSlot) {
                 return;
             }
 
@@ -619,18 +718,26 @@ export default function Booking() {
 
             try {
                 const response = await publicApi.holdBookingSlot({
-                    barberId: selectedBarber.id,
+                    employeeId: selectedEmployee.id,
                     treatmentId: selectedTreatment.id,
                     bookingDate: toIsoDate(selectedDate),
                     startTime: selectedSlot.startTime,
                     endTime: selectedSlot.endTime
                 });
 
+                const expiresAtMs = response?.expiresAt
+                    ? new Date(response.expiresAt).getTime()
+                    : Date.now() + HOLD_DURATION_SECONDS * 1000;
+
+                activeHoldRef.current = {
+                    id: response.id,
+                    expiresAtMs
+                };
                 setActiveHold({
                     id: response.id,
-                    expiresAtMs: Date.now() + HOLD_DURATION_SECONDS * 1000
+                    expiresAtMs
                 });
-                setHoldSecondsLeft(HOLD_DURATION_SECONDS);
+                setHoldSecondsLeft(Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000)));
                 setStep(4);
                 focusBookingSectionOnNextRender();
             } catch (error) {
@@ -721,6 +828,19 @@ export default function Booking() {
         setBookingResult(null);
     }
 
+    function isRecoverableHoldError(message) {
+        return Boolean(
+            message && (
+                message.includes('already been booked') ||
+                message.includes('held by another guest') ||
+                message.includes('hold has expired') ||
+                message.includes('already been confirmed') ||
+                message.includes('already been cancelled') ||
+                message.includes('no longer available')
+            )
+        );
+    }
+
     async function authorizeStripeHold(confirmationTokenId) {
         if (!activeHold?.id) {
             throw new Error('This appointment hold is no longer available. Please choose another time.');
@@ -756,7 +876,7 @@ export default function Booking() {
     async function handleSubmit(event) {
         event.preventDefault();
 
-        if (!selectedTreatment || !selectedBarber || !selectedSlot || !activeHold?.id) {
+        if (!selectedTreatment || !selectedEmployee || !selectedSlot || !activeHold?.id) {
             setSubmitError('Please hold a service, barber, and time slot before confirming the booking.');
             return;
         }
@@ -792,11 +912,49 @@ export default function Booking() {
             return;
         }
 
-        setStripeModalOpen(true);
+        setSubmitting(true);
+
+        try {
+            await publicApi.validateHeldBookingCheckout(activeHold.id, {
+                customer: {
+                    name: customerForm.customerName.trim(),
+                    email: customerForm.customerEmail.trim(),
+                    phone: customerForm.customerPhone.trim() || null
+                }
+            });
+
+            setStripeModalOpen(true);
+        } catch (error) {
+            if (error instanceof PublicApiError) {
+                setFieldErrors(error.fieldErrors || {});
+                setSubmitError(error.message);
+
+                if (isRecoverableHoldError(error.message)) {
+                    setStripeModalOpen(false);
+                    activeHoldRef.current = null;
+                    setActiveHold(null);
+                    setHoldSecondsLeft(null);
+                    setStep(3);
+                    setTimeSelectionError(error.message);
+                    setSelectedSlot(null);
+                    focusBookingSectionOnNextRender();
+
+                    try {
+                        await refreshAvailabilityAfterBooking();
+                    } catch (refreshError) {
+                        setSlotsError(refreshError.message || 'Failed to refresh time slots after booking conflict.');
+                    }
+                }
+            } else {
+                setSubmitError(error.message || 'Booking validation failed. Please try again.');
+            }
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     async function handleStripeConfirmation(paymentIntentId) {
-        if (!selectedTreatment || !selectedBarber || !selectedSlot || !activeHold?.id) {
+        if (!selectedTreatment || !selectedEmployee || !selectedSlot || !activeHold?.id) {
             setStripeModalOpen(false);
             setSubmitError('Please hold a service, barber, and time slot before confirming the booking.');
             return;
@@ -810,9 +968,10 @@ export default function Booking() {
             const response = await publicApi.confirmHeldBooking(activeHold.id, {
                 paymentIntentId
             });
-            const finalizedBooking = await waitForWebhookConfirmedBooking(response);
+            const finalizedBooking = await waitForSettledBookingStatus(response);
 
             setStripeModalOpen(false);
+            activeHoldRef.current = null;
             setActiveHold(null);
             setHoldSecondsLeft(null);
             setBookingResult(finalizedBooking);
@@ -829,6 +988,7 @@ export default function Booking() {
                     error.message?.includes('hold has expired')
                 ) {
                     setStripeModalOpen(false);
+                    activeHoldRef.current = null;
                     setActiveHold(null);
                     setHoldSecondsLeft(null);
                     setStep(3);
@@ -850,7 +1010,7 @@ export default function Booking() {
         }
     }
 
-    async function waitForWebhookConfirmedBooking(initialBooking) {
+    async function waitForSettledBookingStatus(initialBooking) {
         let latestBooking = initialBooking;
 
         if (!initialBooking?.id || initialBooking.status === 'CONFIRMED') {
@@ -870,7 +1030,13 @@ export default function Booking() {
                     return latestBooking;
                 }
             }
-        } catch {
+        } catch (error) {
+            reportAppError(error, {
+                source: 'booking-status-poll',
+                level: 'warn',
+                message: 'Payment completed, but the latest booking status could not be refreshed automatically.',
+                notify: false
+            });
             return latestBooking;
         }
 
@@ -914,7 +1080,7 @@ export default function Booking() {
                         <span>
                             <UserRound size={14} /> Barber
                         </span>
-                        <strong>{selectedBarber?.name || '--'}</strong>
+                        <strong>{selectedEmployee?.name || '--'}</strong>
                     </div>
                     <div>
                         <span>
@@ -1075,9 +1241,14 @@ export default function Booking() {
                         >
                             <SectionTitle title="Choose Your Service" subtitle="Step 1" />
                             {catalogLoading ? <LuxuryCard className="text-center text-smoke">Loading services...</LuxuryCard> : null}
-                            {!catalogLoading ? (
+                            {!catalogLoading && visibleTreatments.length === 0 ? (
+                                <LuxuryCard className="text-center text-smoke">
+                                    No services are currently available for online booking.
+                                </LuxuryCard>
+                            ) : null}
+                            {!catalogLoading && visibleTreatments.length > 0 ? (
                                 <div className="booking-card-grid">
-                                    {sortedTreatments.map((treatment, index) => {
+                                    {visibleTreatments.map((treatment, index) => {
                                         const isSelected = selectedTreatmentId === treatment.id;
 
                                         return (
@@ -1097,7 +1268,7 @@ export default function Booking() {
                                                         aria-hidden="true"
                                                         loading={index < 2 ? 'eager' : 'lazy'}
                                                         decoding="async"
-                                                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                                                        fetchpriority={index === 0 ? 'high' : 'auto'}
                                                     />
                                                     <div
                                                         className="booking-choice-media-overlay"
@@ -1144,29 +1315,34 @@ export default function Booking() {
                         >
                             <SectionTitle title="Pick Your Barber" subtitle="Step 2" />
                             {catalogLoading ? <LuxuryCard className="text-center text-smoke">Loading barbers...</LuxuryCard> : null}
-                            {!catalogLoading ? (
-                                <div className="booking-card-grid booking-card-grid-barbers">
-                                    {sortedBarbers.map((barber, index) => {
-                                        const isSelected = selectedBarberId === barber.id;
+                            {!catalogLoading && eligibleEmployees.length === 0 ? (
+                                <LuxuryCard className="text-center text-smoke">
+                                    No barbers currently provide the selected service.
+                                </LuxuryCard>
+                            ) : null}
+                            {!catalogLoading && eligibleEmployees.length > 0 ? (
+                                <div className="booking-card-grid booking-card-grid-employees">
+                                    {eligibleEmployees.map((employee, index) => {
+                                        const isSelected = selectedEmployeeId === employee.id;
 
                                         return (
                                             <button
-                                                key={barber.id}
+                                                key={employee.id}
                                                 type="button"
                                                 className={`booking-choice-card ${isSelected ? 'booking-choice-card-active' : ''}`}
                                                 onClick={() => {
-                                                    setSelectedBarberId(barber.id);
+                                                    setSelectedEmployeeId(employee.id);
                                                     setBookingResult(null);
                                                 }}
                                             >
-                                                <div className="booking-choice-media booking-choice-media-barber">
+                                                <div className="booking-choice-media booking-choice-media-employee">
                                                     <img
-                                                        src={barber.photoUrl || FALLBACK_BARBER_IMAGE}
+                                                        src={employee.photoUrl || FALLBACK_EMPLOYEE_IMAGE}
                                                         alt=""
                                                         aria-hidden="true"
                                                         loading={index < 2 ? 'eager' : 'lazy'}
                                                         decoding="async"
-                                                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                                                        fetchpriority={index === 0 ? 'high' : 'auto'}
                                                     />
                                                     <div
                                                         className="booking-choice-media-overlay"
@@ -1181,11 +1357,11 @@ export default function Booking() {
                                                     ) : null}
                                                 </div>
                                                 <div className="booking-choice-body">
-                                                    <h3>{barber.name}</h3>
+                                                    <h3>{employee.name}</h3>
                                                     <div className="text-[11px] uppercase tracking-[0.18em] text-goldBright">
-                                                        {barber.role || 'Senior Barber'}
+                                                        {employee.role || 'Senior Barber'}
                                                     </div>
-                                                    <p>{barber.bio || 'Sharp hands, calm energy, and premium attention to detail.'}</p>
+                                                    <p>{employee.bio || 'Sharp hands, calm energy, and premium attention to detail.'}</p>
                                                 </div>
                                             </button>
                                         );
@@ -1197,7 +1373,7 @@ export default function Booking() {
                                 step={step}
                                 onBack={prevStep}
                                 onNext={nextStep}
-                                nextDisabled={!selectedBarberId}
+                                nextDisabled={!selectedEmployeeId}
                             />
                         </motion.section>
                     ) : null}
@@ -1416,7 +1592,7 @@ export default function Booking() {
                         <p id="booking-success-description" className="booking-success-description">
                             {bookingResult.status === 'CONFIRMED'
                                 ? 'Your payment was completed successfully and your appointment is now locked into the calendar. Review the details below and close this window when you are ready.'
-                                : 'Your payment was completed successfully. We are finishing the secure Stripe synchronization now, and your appointment will update automatically to status Confirmed.'}
+                                : 'Your payment was completed successfully. We are still reconciling the final booking status, and it should refresh automatically within a few seconds.'}
                         </p>
 
                         <div className="booking-confirmation-grid">
@@ -1426,7 +1602,7 @@ export default function Booking() {
                             </div>
                             <div>
                                 <span>Barber</span>
-                                <strong>{selectedBarber?.name || '--'}</strong>
+                                <strong>{selectedEmployee?.name || '--'}</strong>
                             </div>
                             <div>
                                 <span>Date</span>
