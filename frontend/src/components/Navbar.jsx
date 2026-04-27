@@ -1,11 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaInstagram, FaTiktok } from 'react-icons/fa';
 import { Menu, Moon, Sun, X } from 'lucide-react';
 import SectionLink from './SectionLink';
 import {
     cancelActiveScrollSequence,
-    scrollWindowToElement,
+    runElementScrollAlignmentSequence,
     scrollWindowToTop,
     setAutoScrollHidden,
     setSiteHeaderHeight
@@ -18,6 +18,15 @@ import {
 import useBodyScrollLock from '../hooks/useBodyScrollLock';
 import { useColorScheme } from '../context/ColorSchemeContext';
 import { getThemeLogoPath } from '../utils/themeAssets';
+
+function getObservedHeaderHeight(entry) {
+    const borderBoxSize = Array.isArray(entry.borderBoxSize)
+        ? entry.borderBoxSize[0]
+        : entry.borderBoxSize;
+    const height = borderBoxSize?.blockSize ?? entry.contentRect?.height ?? 0;
+
+    return Number.isFinite(height) && height > 0 ? height : 0;
+}
 
 export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,31 +52,56 @@ export default function Navbar() {
 
     const mobileItems = [...navItemsLeft, ...navItemsRight];
 
-    useLayoutEffect(() => {
-        const updateHeaderHeight = () => {
-            setSiteHeaderHeight(headerRef.current?.offsetHeight ?? 0);
-        };
-
-        updateHeaderHeight();
-        window.addEventListener('resize', updateHeaderHeight);
-
+    useEffect(() => {
         if (typeof ResizeObserver === 'undefined') {
-            return () => {
-                window.removeEventListener('resize', updateHeaderHeight);
-            };
+            return undefined;
         }
 
-        const observer = new ResizeObserver(() => {
-            updateHeaderHeight();
+        let frameId = null;
+        let pendingHeight = 0;
+        let lastAppliedHeight = 0;
+
+        const applyPendingHeight = () => {
+            frameId = null;
+
+            if (!pendingHeight || Math.abs(pendingHeight - lastAppliedHeight) < 0.5) {
+                return;
+            }
+
+            lastAppliedHeight = pendingHeight;
+            setSiteHeaderHeight(pendingHeight);
+        };
+
+        const scheduleHeaderHeightUpdate = (height) => {
+            if (!height) {
+                return;
+            }
+
+            pendingHeight = height;
+
+            if (frameId != null) {
+                return;
+            }
+
+            frameId = window.requestAnimationFrame(applyPendingHeight);
+        };
+
+        const observer = new ResizeObserver((entries) => {
+            const nextHeight = getObservedHeaderHeight(entries[0]);
+            scheduleHeaderHeightUpdate(nextHeight);
         });
 
-        if (headerRef.current) {
-            observer.observe(headerRef.current);
+        const headerNode = headerRef.current;
+
+        if (headerNode) {
+            observer.observe(headerNode);
         }
 
         return () => {
+            if (frameId != null) {
+                window.cancelAnimationFrame(frameId);
+            }
             observer.disconnect();
-            window.removeEventListener('resize', updateHeaderHeight);
         };
     }, []);
 
@@ -116,7 +150,7 @@ export default function Navbar() {
         if (location.pathname === path) {
             scrollWindowToTop({
                 behavior: 'smooth',
-                hideScrollbar: true
+                hideScrollbar: false
             });
             return;
         }
@@ -130,49 +164,38 @@ export default function Navbar() {
 
         scrollWindowToTop({
             behavior: 'instant',
-            hideScrollbar: true
+            hideScrollbar: false
         });
 
         window.requestAnimationFrame(() => {
             scrollWindowToTop({
                 behavior: 'instant',
-                hideScrollbar: true
+                hideScrollbar: false
             });
         });
 
         window.setTimeout(() => {
             scrollWindowToTop({
                 behavior: 'instant',
-                hideScrollbar: true
+                hideScrollbar: false
             });
         }, 90);
     }
 
     function repeatMobileScrollToElement(element) {
-        cancelActiveScrollSequence();
-
         if (!element) {
             repeatMobileScrollToTop();
             return;
         }
 
-        const scrollToTarget = () => {
-            scrollWindowToElement(element, {
-                behavior: 'instant',
-                extraOffset: 16,
-                hideScrollbar: true
-            });
-        };
-
-        scrollToTarget();
-
-        window.requestAnimationFrame(() => {
-            scrollToTarget();
+        runElementScrollAlignmentSequence(element, {
+            initialBehavior: 'instant',
+            retryBehavior: 'instant',
+            extraOffset: 16,
+            hideScrollbar: false,
+            retryDelays: [120, 300, 700],
+            maxDuration: 1000
         });
-
-        window.setTimeout(() => {
-            scrollToTarget();
-        }, 90);
     }
 
     function handleMobileRouteNavigation(path) {
@@ -183,7 +206,7 @@ export default function Navbar() {
             if (location.pathname === path) {
                 scrollWindowToTop({
                     behavior: 'smooth',
-                    hideScrollbar: true
+                    hideScrollbar: false
                 });
                 return;
             }

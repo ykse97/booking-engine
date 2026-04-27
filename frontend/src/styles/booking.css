@@ -44,7 +44,7 @@
 .booking-title {
     margin: 0;
     color: #fff9f0;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: clamp(1.8rem, 4vw, 2.9rem);
     line-height: 1.08;
     letter-spacing: 0.08em;
@@ -85,7 +85,7 @@
 .booking-guide-heading {
     margin: 4px 0 0;
     color: #fff4e3;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1rem;
     line-height: 1.5;
     letter-spacing: 0.08em;
@@ -233,7 +233,7 @@
 .booking-success-card h2 {
     margin: 0;
     color: #f0fff2;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1.6rem;
     line-height: 1.3;
     letter-spacing: 0.06em;
@@ -407,7 +407,7 @@
 .booking-choice-body h3 {
     margin: 0;
     color: #fff8ef;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1.05rem;
     line-height: 1.45;
     text-transform: uppercase;
@@ -427,7 +427,7 @@
     justify-content: space-between;
     gap: 12px;
     color: #fff5e8;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     font-size: 0.88rem;
@@ -571,7 +571,7 @@
 .booking-summary-card h2 {
     margin: 0;
     color: #fff8ee;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1.4rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -823,7 +823,7 @@
 .stripe-modal-header h2 {
     margin: 10px 0 0;
     color: #fff8ef;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1.5rem;
     letter-spacing: 0.07em;
     text-transform: uppercase;

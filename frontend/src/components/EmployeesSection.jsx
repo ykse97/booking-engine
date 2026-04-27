@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import SectionTitle from './ui/SectionTitle';
 import LuxuryCard from './ui/LuxuryCard';
 import { publicApi } from '../api/publicApi';
+import '../styles/services.css';
 
 const FALLBACK_IMAGE =
     'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=900&q=80';

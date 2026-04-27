@@ -48,6 +48,8 @@ html[data-theme='light'] {
 html {
     scroll-behavior: smooth;
     scroll-padding-top: calc(var(--site-header-height) + 20px);
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
     color-scheme: dark;
     background-color: var(--lux-bg-0);
 }
@@ -87,6 +89,7 @@ html.section-scroll-pending .lux-shell>footer {
 body {
     @apply bg-night text-ivory font-body antialiased;
     margin: 0;
+    overflow-x: hidden;
     color: var(--lux-text);
     background:
         radial-gradient(circle at top, rgba(255, 255, 255, 0.045), transparent 24%),
@@ -125,6 +128,15 @@ body {
 
 .text-goldBright {
     color: var(--lux-accent-1);
+}
+
+.services-page-shell {
+    width: 100%;
+    max-width: var(--site-content-width);
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
 .site-header {
@@ -254,6 +266,7 @@ body {
 }
 
 .btn-gold:hover {
+    transform: scale(1.02);
     filter: brightness(1.04);
     box-shadow:
         0 22px 40px rgba(0, 0, 0, 0.32),
@@ -268,9 +281,14 @@ body {
     transform: translateX(42%);
 }
 
+.btn-gold:active {
+    transform: scale(0.98);
+}
+
 .btn-gold:disabled {
     opacity: 0.62;
     cursor: not-allowed;
+    transform: none;
     filter: saturate(0.82);
     box-shadow:
         0 12px 24px rgba(0, 0, 0, 0.18),
@@ -388,7 +406,7 @@ body {
 #hero .hero-kicker {
     margin: 0;
     color: rgba(244, 220, 169, 0.92);
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 0.82rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
@@ -733,6 +751,11 @@ html[data-theme='light'] #hero a[href^='tel:'] {
 
 /* ================= TABLET (640px+) ================= */
 @media (min-width: 640px) {
+    .services-page-shell {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
     .glass-card {
         border-radius: 18px;
         padding: 20px;
@@ -775,6 +798,11 @@ html[data-theme='light'] #hero a[href^='tel:'] {
 
 /* ================= LAPTOP (1024px+) ================= */
 @media (min-width: 1024px) {
+    .services-page-shell {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
     .glass-card {
         border-radius: 20px;
         padding: 24px;
@@ -811,6 +839,11 @@ html[data-theme='light'] #hero a[href^='tel:'] {
 
 /* ================= DESKTOP (1280px+) ================= */
 @media (min-width: 1280px) {
+    .services-page-shell {
+        padding-left: 48px;
+        padding-right: 48px;
+    }
+
     .lux-shell::before {
         opacity: 0.22;
     }

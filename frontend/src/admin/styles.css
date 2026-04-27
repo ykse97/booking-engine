@@ -42,7 +42,7 @@
 .panel h3 {
     margin: 0;
     color: #fff8ef;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -451,7 +451,7 @@ td {
 .admin-title {
     margin: 0;
     color: #fff9f0;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: clamp(2rem, 5vw, 3.2rem);
     line-height: 1.05;
     letter-spacing: 0.07em;
@@ -499,7 +499,7 @@ td {
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 13px;
     transition:
         transform 0.18s ease,
@@ -740,7 +740,7 @@ form + .admin-form-actions,
 
 .admin-summary-pill strong {
     color: #fff8ef;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1.2rem;
     letter-spacing: 0.04em;
 }
@@ -771,7 +771,7 @@ form + .admin-form-actions,
 .booking-summary-card h2 {
     margin: 0;
     color: #fff8ee;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1.35rem;
     line-height: 1.3;
     letter-spacing: 0.08em;
@@ -831,7 +831,7 @@ form + .admin-form-actions,
 
 .admin-summary-list-value {
     color: #fff8ef;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1rem;
     line-height: 1.45;
     text-align: right;
@@ -1203,7 +1203,7 @@ form + .admin-form-actions,
         radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 40%),
         linear-gradient(180deg, rgba(27, 27, 27, 0.98), rgba(12, 12, 12, 0.96));
     color: #fff8ef;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     letter-spacing: 0.06em;
 }
 
@@ -1254,7 +1254,7 @@ form + .admin-form-actions,
 .admin-template-header h3 {
     margin: 0;
     color: #fff8ef;
-    font-family: "Cinzel", "Playfair Display", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;

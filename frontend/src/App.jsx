@@ -61,22 +61,25 @@ function runTopAlignmentSequence() {
     };
 }
 
-function runElementAlignmentSequence(sectionId) {
+function runElementAlignmentSequence(sectionId, initialTarget = null) {
     cancelActiveScrollSequence();
 
     const timeoutIds = [];
     const frameIds = [];
     let cancelled = false;
+    let targetElement = initialTarget;
 
     const alignToTarget = () => {
         if (cancelled) {
             return;
         }
 
-        const target = document.getElementById(sectionId);
+        if (!targetElement?.isConnected) {
+            targetElement = document.getElementById(sectionId);
+        }
 
-        if (target) {
-            scrollWindowToElement(target, {
+        if (targetElement) {
+            scrollWindowToElement(targetElement, {
                 behavior: 'instant',
                 extraOffset: 16
             });
@@ -109,23 +112,7 @@ function runElementAlignmentSequence(sectionId) {
         })
     );
 
-    [
-        0,
-        60,
-        140,
-        240,
-        360,
-        520,
-        720,
-        980,
-        1280,
-        1700,
-        2200,
-        2800,
-        3600,
-        4600,
-        5800
-    ].forEach(scheduleAlign);
+    [80, 200, 400, 800, 1300].forEach(scheduleAlign);
 
     let disposeSequence = null;
 
@@ -150,7 +137,7 @@ function runElementAlignmentSequence(sectionId) {
     timeoutIds.push(
         window.setTimeout(() => {
             disposeSequence?.();
-        }, 6200)
+        }, 2000)
     );
 
     return disposeSequence;
@@ -239,7 +226,7 @@ function ScrollToSectionHandler() {
             const target = document.getElementById(sectionId);
 
             if (target) {
-                cleanupAlignment = runElementAlignmentSequence(sectionId);
+                cleanupAlignment = runElementAlignmentSequence(sectionId, target);
                 timerId = window.setTimeout(() => {
                     if (!cancelled) {
                         finish();
@@ -278,11 +265,41 @@ function ScrollToSectionHandler() {
     return null;
 }
 
+function ForceHomeTopHandler() {
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname !== '/') {
+            return;
+        }
+
+        if (sessionStorage.getItem('forceHomeTop') !== '1') {
+            return;
+        }
+
+        sessionStorage.removeItem('forceHomeTop');
+        cancelActiveScrollSequence();
+
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        });
+
+        const timeoutId = window.setTimeout(() => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        }, 50);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [location.pathname]);
+
+    return null;
+}
+
 function Layout({ children }) {
     return (
         <div className="lux-shell">
             <Navbar />
             <ScrollToSectionHandler />
+            <ForceHomeTopHandler />
             <main>{children}</main>
             <Footer />
         </div>

@@ -1054,6 +1054,8 @@ export default function Booking() {
         setCustomerForm(initialCustomerForm());
         setConfirmationAccepted(false);
         setConfirmationConsentFlash(false);
+
+        sessionStorage.setItem('forceHomeTop', '1');
         navigate('/', { replace: true });
     }
 

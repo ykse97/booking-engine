@@ -1,13 +1,3 @@
-/* ================= SERVICES PAGE LAYOUT ================= */
-.services-page-shell {
-    width: 100%;
-    max-width: var(--site-content-width);
-    margin: 0 auto;
-    box-sizing: border-box;
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
 .services-grid {
     display: flex;
     flex-wrap: wrap;
@@ -55,7 +45,7 @@
     margin: 0;
     text-align: center;
     color: #fff8ef;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     line-height: 1.45;
@@ -100,7 +90,7 @@
 .service-card-meta-value {
     margin-top: 6px;
     color: #fff8ef;
-    font-family: "Cinzel", serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1rem;
     letter-spacing: 0.06em;
 }
@@ -443,11 +433,6 @@
 
 /* Tablet */
 @media (min-width: 640px) {
-    .services-page-shell {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
-
     .services-grid {
         gap: 24px;
     }
@@ -477,11 +462,6 @@
 
 /* Laptop */
 @media (min-width: 1024px) {
-    .services-page-shell {
-        padding-left: 40px;
-        padding-right: 40px;
-    }
-
     .services-grid {
         gap: 28px;
     }
@@ -546,11 +526,6 @@
 
 /* Desktop */
 @media (min-width: 1280px) {
-    .services-page-shell {
-        padding-left: 48px;
-        padding-right: 48px;
-    }
-
     .services-grid {
         gap: 32px;
     }

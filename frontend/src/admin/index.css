@@ -55,7 +55,7 @@ html[data-admin-app='true'][data-theme='light'] {
 body {
     margin: 0;
     color: var(--lux-text);
-    font-family: "Inter", "Segoe UI", sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background:
         radial-gradient(circle at top, rgba(255, 255, 255, 0.045), transparent 24%),
         radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.02), transparent 22%),
@@ -236,6 +236,7 @@ html[data-admin-app='true'][data-theme='light'] .btn-gold:hover {
 }
 
 .btn-gold:hover {
+    transform: scale(1.02);
     filter: brightness(1.04);
     box-shadow:
         0 22px 40px rgba(0, 0, 0, 0.32),
@@ -250,9 +251,14 @@ html[data-admin-app='true'][data-theme='light'] .btn-gold:hover {
     transform: translateX(42%);
 }
 
+.btn-gold:active {
+    transform: scale(0.98);
+}
+
 .btn-gold:disabled {
     opacity: 0.62;
     cursor: not-allowed;
+    transform: none;
     filter: saturate(0.82);
     box-shadow:
         0 12px 24px rgba(0, 0, 0, 0.18),

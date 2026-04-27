@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { publicApi } from '../api/publicApi';
 import SectionTitle from './ui/SectionTitle';
 import LuxuryCard from './ui/LuxuryCard';
 import GoldButton from './ui/GoldButton';
+import '../styles/services.css';
 
 const FALLBACK_IMAGE =
     'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=900&q=80';
@@ -14,7 +14,8 @@ export default function ServicesSection({
     title = 'Our Services',
     subtitle = 'crafted cuts & shaves',
     wide = false,
-    limit = null
+    limit = null,
+    sectionId = 'services'
 }) {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -69,7 +70,7 @@ export default function ServicesSection({
         : 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3';
 
     return (
-        <section className={sectionClass} id="services">
+        <section className={sectionClass} id={sectionId || undefined}>
             <SectionTitle title={title} subtitle={subtitle} />
 
             {loading && <div className="text-center text-ivory/80">Loading services...</div>}
@@ -82,13 +83,9 @@ export default function ServicesSection({
             {!loading && !error && visibleServices.length > 0 && (
                 <div className={gridClass}>
                     {visibleServices.map((service, idx) => (
-                        <motion.div
+                        <div
                             key={service.id}
                             className={wide ? 'service-card h-full' : 'h-full'}
-                            initial={{ opacity: 0, y: 18 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.05, duration: 0.35 }}
                         >
                             <LuxuryCard className="h-full overflow-hidden rounded-[20px] border border-[#c6934b45] bg-[linear-gradient(180deg,rgba(12,12,12,0.96),rgba(4,4,4,0.94))]">
                                 <div className={wide ? 'service-card-inner' : 'flex flex-col'}>
@@ -183,7 +180,7 @@ export default function ServicesSection({
                                     </div>
                                 </div>
                             </LuxuryCard>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             )}

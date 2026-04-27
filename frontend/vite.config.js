@@ -28,10 +28,27 @@ export default defineConfig(({ mode }) => {
                 : undefined
         },
         build: {
+            sourcemap: false,
+            minify: 'esbuild',
+            cssCodeSplit: true,
             rollupOptions: {
                 input: {
                     main: resolve(root, 'index.html'),
                     admin: resolve(root, 'admin.html')
+                },
+                output: {
+                    manualChunks(id) {
+                        if (
+                            id.includes('node_modules/react/')
+                            || id.includes('node_modules/react-dom/')
+                            || id.includes('node_modules/react-router-dom/')
+                            || id.includes('node_modules/@remix-run/router/')
+                            || id.includes('node_modules/scheduler/')
+                        ) {
+                            return 'react-vendor';
+                        }
+                        return undefined;
+                    }
                 }
             }
         }

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { scrollWindowToElement, scrollWindowToTop } from '../utils/scroll';
+import { runElementScrollAlignmentSequence, scrollWindowToTop } from '../utils/scroll';
 import { preparePendingNavigation } from '../utils/navigation';
 import { requestDeferredSectionMount } from '../utils/deferredSections';
 
@@ -22,7 +22,7 @@ export default function SectionLink({
             if (!sectionId) {
                 scrollWindowToTop({
                     behavior: 'smooth',
-                    hideScrollbar: true
+                    hideScrollbar: false
                 });
                 onNavigate?.();
                 return;
@@ -32,15 +32,16 @@ export default function SectionLink({
             const target = document.getElementById(sectionId);
 
             if (target) {
-                scrollWindowToElement(target, {
-                    behavior: 'smooth',
+                runElementScrollAlignmentSequence(target, {
+                    initialBehavior: 'smooth',
+                    retryBehavior: 'instant',
                     extraOffset: 16,
-                    hideScrollbar: true
+                    hideScrollbar: false
                 });
             } else {
                 scrollWindowToTop({
                     behavior: 'smooth',
-                    hideScrollbar: true
+                    hideScrollbar: false
                 });
             }
 

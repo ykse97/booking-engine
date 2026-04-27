@@ -1,8 +1,8 @@
 import { lazy } from 'react';
 import DeferredSection from '../components/DeferredSection';
 import Hero from '../components/Hero';
-import ServicesSection from '../components/ServicesSection';
 
+const ServicesSection = lazy(() => import('../components/ServicesSection'));
 const EmployeesSection = lazy(() => import('../components/EmployeesSection'));
 const GallerySection = lazy(() => import('../components/GallerySection'));
 
@@ -10,7 +10,13 @@ export default function Home() {
     return (
         <div id="top">
             <Hero />
-            <ServicesSection limit={3} />
+            <DeferredSection
+                sectionId="services"
+                placeholderMinHeight={420}
+                rootMargin="0px 0px 80px 0px"
+            >
+                <ServicesSection limit={3} sectionId={null} />
+            </DeferredSection>
             <DeferredSection
                 sectionId="employees"
                 placeholderMinHeight={820}

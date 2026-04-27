@@ -4,8 +4,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                heading: ['"Playfair Display"', '"Cinzel"', 'serif'],
-                body: ['Inter', 'system-ui', 'sans-serif']
+                heading: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+                body: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif']
             },
             colors: {
                 night: '#0b0806',

@@ -1,7 +1,7 @@
-import React from 'react';
+import { Component } from 'react';
 import { reportAppError } from '../utils/appErrorBus';
 
-class GlobalErrorBoundary extends React.Component {
+class GlobalErrorBoundary extends Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false };

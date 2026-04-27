@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import GoldButton from './ui/GoldButton';
 import { preparePendingNavigation } from '../utils/navigation';
 import useHairSalonInfo from '../hooks/useHairSalonInfo';
 
@@ -34,71 +32,43 @@ export default function Hero() {
             <div className="services-page-shell hero-shell pt-16 pb-14">
                 <div className="hero-content mx-auto flex w-full max-w-[980px] flex-col items-center justify-center text-center">
                     <div className="hero-copy-shell">
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.08 }}
-                            className="hero-kicker"
-                        >
+                        <p className="hero-kicker">
                             Royal Chair Barber & Beauty Salon
-                        </motion.p>
+                        </p>
 
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.11 }}
-                            className="hero-eyebrow text-sm tracking-[0.32em] text-white uppercase"
-                        >
+                        <p className="hero-eyebrow text-sm tracking-[0.32em] text-white uppercase">
                             Women / Men / Kids
-                        </motion.p>
+                        </p>
 
-                        <motion.h1
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.15 }}
-                            className="hero-title text-4xl sm:text-5xl font-heading text-ivory leading-tight"
-                        >
+                        <h1 className="hero-title text-4xl sm:text-5xl font-heading text-ivory leading-tight">
                             Your Style, Perfected
-                        </motion.h1>
+                        </h1>
 
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.18 }}
-                            className="hero-description"
-                        >
+                        <p className="hero-description">
                             {description}
-                        </motion.p>
+                        </p>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="hero-meta"
-                        >
+                        <div className="hero-meta">
                             <a
                                 className="hero-phone text-sm text-smoke tracking-[0.14em]"
                                 href={telHref}
                             >
                                 {phoneNumber}
                             </a>
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.23 }}
-                            className="hero-actions"
-                        >
-                            <GoldButton
+                        <div className="hero-actions">
+                            <button
+                                type="button"
+                                className="btn-gold"
                                 onClick={() => {
                                     preparePendingNavigation('/booking', null);
                                     navigate('/booking');
                                 }}
                             >
                                 Book Appointment
-                            </GoldButton>
-                        </motion.div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

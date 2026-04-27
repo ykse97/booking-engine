@@ -51,7 +51,7 @@ function buildStripeAppearance(colorScheme) {
             tabLogoSelectedColor: isLight ? 'dark' : 'light',
             blockLogoColor: isLight ? 'dark' : 'light',
             borderRadius: '18px',
-            fontFamily: '"Cormorant Garamond", serif'
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
         },
         rules: {
             '.Tab': {

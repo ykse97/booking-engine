@@ -7,6 +7,7 @@ import SectionTitle from './ui/SectionTitle';
 import GoldButton from './ui/GoldButton';
 import { preparePendingNavigation } from '../utils/navigation';
 import { gallery } from '../data/gallery';
+import '../styles/services.css';
 
 const TWEEN_FACTOR_BASE = 0.26;
 

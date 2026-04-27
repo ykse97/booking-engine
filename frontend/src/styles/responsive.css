@@ -59,7 +59,7 @@
     }
 
     .service-card-meta-value {
-        font-family: "Inter", sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         font-size: 1.02rem;
         line-height: 1.35;
         letter-spacing: 0.01em;
